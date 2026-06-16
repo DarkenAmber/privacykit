@@ -314,7 +314,7 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
   .topbar-file-size{display:none}
   .topbar-file-name{font-size:11px}
   #stripStatus{font-size:9px;padding:2px 6px}
-  #changeFileLbl,#newPhotoLbl{display:none}
+  #changeFileLbl,#newPhotoLbl,#clearSessionLbl{display:none}
   .topbar-file-btns .btn{padding:5px 8px;font-size:13px}
 
   /* ── TOOL TABS ── */
@@ -408,6 +408,7 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
         <span id="stripStatus" class="status-badge s-has" style="display:none"></span>
         <button class="btn btn-ghost btn-sm" onclick="triggerReplace()">↩ <span id="changeFileLbl">Change</span></button>
         <button class="btn btn-ghost btn-sm" onclick="goHome()" title="Load a different photo" style="color:var(--muted)">📂 <span id="newPhotoLbl">New photo</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="clearSession()" title="Clear all data from browser memory" style="color:var(--error)">🗑 <span id="clearSessionLbl">Clear session</span></button>
       </div>
     </div>
   </div>
@@ -890,7 +891,7 @@ const STRINGS = {
     tool5Name:'Resize', tool5Desc:'Change dimensions',
     tool6Name:'Watermark', tool6Desc:'Add text overlay',
     tool7Name:'Compress', tool7Desc:'Reduce file size', pwaInstallLbl:'Install app',
-    newPhotoLbl:'New photo',
+    newPhotoLbl:'New photo', clearSessionLbl:'Clear session', sessionCleared:'🗑 Session cleared',
     cleanResultTitle:'Cleaned — verification report',
     cleanResultSub:'Original file on your disk is unchanged',
     verifyLoc:'GPS Location', verifyDevice:'Device info', verifyTime:'Timestamps',
@@ -958,7 +959,7 @@ const STRINGS = {
     tool5Name:'Размер', tool5Desc:'Изменить размер',
     tool6Name:'Ватермарк', tool6Desc:'Добавить текст',
     tool7Name:'Сжатие', tool7Desc:'Уменьшить файл', pwaInstallLbl:'Установить приложение',
-    newPhotoLbl:'Новое фото',
+    newPhotoLbl:'Новое фото', clearSessionLbl:'Очистить сессию', sessionCleared:'🗑 Сессия очищена',
     cleanResultTitle:'Очищено — отчёт верификации',
     cleanResultSub:'Оригинал на диске не изменён',
     verifyLoc:'GPS координаты', verifyDevice:'Устройство', verifyTime:'Временные метки',
@@ -991,7 +992,7 @@ const s = () => STRINGS[currentLang];
 
 function applyStrings() {
   const L = s();
-  const ids = ['heroSub','dropTitle','dropSub','dropLoadingLbl','changeFileLbl','newPhotoLbl',
+  const ids = ['heroSub','dropTitle','dropSub','dropLoadingLbl','changeFileLbl','newPhotoLbl','clearSessionLbl',
     'howTitle','toolsTitle',
     'howStep1','howStep1Desc','howStep2','howStep2Desc','howStep3','howStep3Desc',
     'privacyTitle','privacyP1','privacyP2','privacyP3','privacyP4','privacyP5','privacyP6',
@@ -1136,6 +1137,72 @@ function goHome() {
   document.getElementById('exif-clean-result').style.display = 'none';
   document.getElementById('crop-result-wrap').style.display = 'none';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+}
+
+function clearSession() {
+  // Wipe all app state
+  appState.file = null;
+  appState.exif = {};
+  appState.img = null;
+  appState.outputs = { exif:null, editor:null, crop:null, watermark:null, compress:null, rotate:null, resize:null };
+
+  // Revoke all object URLs
+  Object.keys(_urls).forEach(k => revokeURL(k));
+
+  // Clear all canvases
+  ['crop-canvas','rotate-canvas','wm-canvas'].forEach(id => {
+    const c = document.getElementById(id);
+    if (c) { c.width = 1; c.height = 1; c.getContext('2d').clearRect(0,0,1,1); }
+  });
+
+  // Clear image previews
+  const thumb = document.getElementById('stripThumb');
+  if (thumb) thumb.src = '';
+  const cropImg = document.getElementById('crop-result-img');
+  if (cropImg) cropImg.src = '';
+  const cBefore = document.getElementById('compress-img-before');
+  if (cBefore) cBefore.src = '';
+  const cAfter = document.getElementById('compress-img-after');
+  if (cAfter) cAfter.src = '';
+
+  // Clear all text outputs
+  document.getElementById('exif-output').innerHTML = '';
+  document.getElementById('verify-report').innerHTML = '';
+
+  // Clear editor fields
+  ['ed-artist','ed-copyright','ed-desc','ed-software','ed-lat','ed-lng'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  // Reset watermark transform
+  wmTransform = { x: 0.5, y: 0.92, sizePx: 32, rotateDeg: 0 };
+  wmPosXY = { x: 0.5, y: 0.92 };
+
+  // Reset rotate state
+  rotateState = { deg: 0, flipH: false, flipV: false };
+
+  // Reset crop
+  cropSel = null;
+
+  // Reset PWA drag flags so events can be re-bound on next file
+  _cropEventsBound = false;
+  _wmDragBound = false;
+
+  // Hide all panels and show home
+  document.getElementById('dropScreen').style.display = '';
+  document.getElementById('dropZone').classList.remove('loading');
+  document.getElementById('fileStrip').classList.remove('visible');
+  document.getElementById('toolTabs').classList.remove('visible');
+  document.getElementById('exif-clean-result').style.display = 'none';
+  document.getElementById('crop-result-wrap').style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+  // Clear file inputs so same file can be re-selected
+  document.getElementById('fileInput').value = '';
+  document.getElementById('replaceInput').value = '';
+
+  showToast(s().sessionCleared || '🗑 Session cleared');
 }
 
 // ══════════════════════════════════════════════════════
