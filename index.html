@@ -85,22 +85,22 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 [data-theme="retro"] body::after{content:'';position:fixed;inset:0;background:linear-gradient(180deg,#1a0533 0%,#2d0a5e 25%,#6b1fa8 55%,#1a0533 100%);z-index:-1}
 
 /* ── TOPBAR ── */
-.topbar{height:56px;background:var(--sidebar-bg);border-bottom:var(--bw) solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px var(--shadow);flex-shrink:0}
+.topbar{height:52px;background:var(--sidebar-bg);border-bottom:var(--bw) solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 1px 4px var(--shadow);flex-shrink:0}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
-.brand-icon{width:32px;height:32px;background:var(--accent);border-radius:var(--r-btn);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.brand-name{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);line-height:1}
+.brand-icon{width:30px;height:30px;background:var(--accent);border-radius:var(--r-btn);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.brand-name{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);line-height:1}
 [data-theme="retro"] .brand-name{font-family:'Press Start 2P';font-size:10px;color:var(--accent)}
 .brand-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
-.topbar-center{flex:1;display:flex;align-items:center;justify-content:center}
 
-/* file strip in topbar */
-.topbar-file{display:none;align-items:center;gap:10px;background:var(--surface);border:var(--bw) solid var(--border2);border-radius:var(--r-input);padding:6px 12px;max-width:420px;width:100%}
-.topbar-file.visible{display:flex}
-.topbar-file-thumb{width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
-.topbar-file-info{flex:1;min-width:0}
-.topbar-file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar-file-size{font-size:10px;color:var(--muted);font-family:var(--mono)}
-.topbar-file-btns{display:flex;gap:6px;flex-shrink:0}
+/* ── FILE STRIP — separate bar below topbar ── */
+.file-strip-bar{display:none;align-items:center;gap:10px;padding:7px 20px;background:var(--surface);border-bottom:var(--bw) solid var(--border);position:sticky;top:52px;z-index:150}
+.file-strip-bar.visible{display:flex}
+.topbar-file{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.topbar-file-thumb{width:28px;height:28px;border-radius:5px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.topbar-file-info{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.topbar-file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px}
+.topbar-file-size{font-size:10px;color:var(--muted);font-family:var(--mono);flex-shrink:0}
+.topbar-file-btns{display:flex;gap:6px;flex-shrink:0;margin-left:auto}
 
 .topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
 
@@ -120,7 +120,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .icon-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
 
 /* ── TOOL TABS ── */
-.tool-tabs{display:none;background:var(--sidebar-bg);border-bottom:var(--bw) solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:56px;z-index:100;flex-shrink:0}
+.tool-tabs{display:none;background:var(--sidebar-bg);border-bottom:var(--bw) solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:52px;z-index:100;flex-shrink:0}
+.tool-tabs.with-strip{top:94px} /* topbar 52 + file strip 42 */
 .tool-tabs::-webkit-scrollbar{display:none}
 .tool-tabs.visible{display:flex}
 .tool-tab{display:flex;align-items:center;gap:7px;padding:0 22px;height:46px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;flex-shrink:0;user-select:none}
@@ -240,6 +241,11 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .fade-in{animation:fadeIn .25s ease}
 
+/* Hide button text labels when file strip is visible to save space */
+@media(max-width:900px){
+  .btn-label{display:none}
+}
+
 /* ── HOW IT WORKS ── */
 .how-it-works{width:100%;max-width:640px;margin:36px auto 0;text-align:center}
 .how-title{font-size:11px;font-family:var(--mono);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-dim);margin-bottom:20px}
@@ -310,11 +316,10 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
   .dropdown-btn{padding:6px 8px;gap:2px;font-size:11px}
 
   /* ── FILE STRIP ── */
-  .topbar-file{max-width:none;padding:5px 8px;gap:6px}
+  .file-strip-bar{padding:5px 12px;gap:6px}
   .topbar-file-size{display:none}
-  .topbar-file-name{font-size:11px}
+  .topbar-file-name{font-size:11px;max-width:140px}
   #stripStatus{font-size:9px;padding:2px 6px}
-  #changeFileLbl,#newPhotoLbl,#clearSessionLbl{display:none}
   .topbar-file-btns .btn{padding:5px 8px;font-size:13px}
 
   /* ── TOOL TABS ── */
@@ -397,24 +402,7 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
     </div>
   </a>
 
-  <div class="topbar-center">
-    <div class="topbar-file" id="fileStrip">
-      <img class="topbar-file-thumb" id="stripThumb" src="" alt="">
-      <div class="topbar-file-info">
-        <div class="topbar-file-name" id="stripName">—</div>
-        <div class="topbar-file-size" id="stripMeta">—</div>
-      </div>
-      <div class="topbar-file-btns">
-        <span id="stripStatus" class="status-badge s-has" style="display:none"></span>
-        <button class="btn btn-ghost btn-sm" onclick="triggerReplace()">↩ <span id="changeFileLbl">Change</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="goHome()" title="Load a different photo" style="color:var(--muted)">📂 <span id="newPhotoLbl">New photo</span></button>
-        <button class="btn btn-ghost btn-sm" onclick="clearSession()" title="Clear all data from browser memory" style="color:var(--error)">🗑 <span id="clearSessionLbl">Clear session</span></button>
-      </div>
-    </div>
-  </div>
-
   <div class="topbar-right">
-    <!-- Theme dropdown -->
     <div class="dropdown" id="themeDD">
       <button class="dropdown-btn" onclick="toggleDD('themeDD')">🎨 <span id="themeLabel">Dark</span> ▾</button>
       <div class="dropdown-menu" id="themeDD-menu">
@@ -423,7 +411,6 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
         <div class="dropdown-item" onclick="setTheme('retro',this)">👾 Retro</div>
       </div>
     </div>
-    <!-- Lang dropdown -->
     <div class="dropdown" id="langDD">
       <button class="dropdown-btn" onclick="toggleDD('langDD')">🌐 <span id="langLabel">EN</span> ▾</button>
       <div class="dropdown-menu" id="langDD-menu">
@@ -433,6 +420,21 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
     </div>
     <a href="https://github.com/darkenamber/privacykit" target="_blank" class="icon-btn">⭐ <span>GitHub</span></a>
     <a href="https://ko-fi.com/darkenamber" target="_blank" class="icon-btn">☕ <span>Ko-fi</span></a>
+  </div>
+</div>
+
+<!-- ══ FILE STRIP BAR ══ -->
+<div class="file-strip-bar" id="fileStrip">
+  <img class="topbar-file-thumb" id="stripThumb" src="" alt="">
+  <div class="topbar-file-info">
+    <div class="topbar-file-name" id="stripName">—</div>
+    <div class="topbar-file-size" id="stripMeta">—</div>
+    <span id="stripStatus" class="status-badge s-has" style="display:none"></span>
+  </div>
+  <div class="topbar-file-btns">
+    <button class="btn btn-ghost btn-sm" onclick="triggerReplace()" title="Change photo">↩ <span id="changeFileLbl" class="btn-label">Change</span></button>
+    <button class="btn btn-ghost btn-sm" onclick="goHome()" title="New photo" style="color:var(--muted)">📂 <span id="newPhotoLbl" class="btn-label">New photo</span></button>
+    <button class="btn btn-ghost btn-sm" onclick="clearSession()" title="Clear all data from browser memory" style="color:var(--error)">🗑 <span id="clearSessionLbl" class="btn-label">Clear</span></button>
   </div>
 </div>
 
@@ -613,8 +615,8 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
           <div class="field"><label class="field-label" id="lbCopyright">Copyright</label><input class="field-input" id="ed-copyright" placeholder="—"></div>
           <div class="field"><label class="field-label" id="lbDesc">Description</label><input class="field-input" id="ed-desc" placeholder="—"></div>
           <div class="field"><label class="field-label" id="lbSoftware">Software</label><input class="field-input" id="ed-software" placeholder="—"></div>
-          <div class="field"><label class="field-label" id="lbLat">GPS Latitude</label><input class="field-input" id="ed-lat" placeholder="40.409264"></div>
-          <div class="field"><label class="field-label" id="lbLng">GPS Longitude</label><input class="field-input" id="ed-lng" placeholder="49.867092"></div>
+          <div class="field"><label class="field-label" id="lbLat">GPS Latitude</label><input class="field-input" id="ed-lat" placeholder="e.g. 51.5074"></div>
+          <div class="field"><label class="field-label" id="lbLng">GPS Longitude</label><input class="field-input" id="ed-lng" placeholder="e.g. -0.1278"></div>
         </div>
         <div class="action-row">
           <button class="btn btn-primary" onclick="saveEdits()">✓ <span id="saveBtnLbl">Save changes</span></button>
@@ -1132,7 +1134,7 @@ function goHome() {
   document.getElementById('dropScreen').style.display = '';
   document.getElementById('dropZone').classList.remove('loading');
   document.getElementById('fileStrip').classList.remove('visible');
-  document.getElementById('toolTabs').classList.remove('visible');
+  document.getElementById('toolTabs').classList.remove('visible','with-strip');
   document.getElementById('exif-output').innerHTML = '';
   document.getElementById('exif-clean-result').style.display = 'none';
   document.getElementById('crop-result-wrap').style.display = 'none';
@@ -1193,7 +1195,7 @@ function clearSession() {
   document.getElementById('dropScreen').style.display = '';
   document.getElementById('dropZone').classList.remove('loading');
   document.getElementById('fileStrip').classList.remove('visible');
-  document.getElementById('toolTabs').classList.remove('visible');
+  document.getElementById('toolTabs').classList.remove('visible','with-strip');
   document.getElementById('exif-clean-result').style.display = 'none';
   document.getElementById('crop-result-wrap').style.display = 'none';
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1211,6 +1213,7 @@ function clearSession() {
 function showFileStrip() {
   const strip = document.getElementById('fileStrip');
   strip.classList.add('visible');
+  document.getElementById('toolTabs').classList.add('with-strip');
   document.getElementById('stripThumb').src = createURL('thumb', appState.file);
   document.getElementById('stripName').textContent = appState.file.name;
   document.getElementById('stripMeta').textContent = formatSize(appState.file.size) + ' · ' + (appState.img ? appState.img.naturalWidth + '×' + appState.img.naturalHeight : '');
