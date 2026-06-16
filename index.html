@@ -1423,27 +1423,56 @@ async function cleanExif() {
     let buf = await src.arrayBuffer();
 
     if (isJpeg) {
-      // Step 1: piexif — clean EXIF IFD blocks
-      const bin = buf2str(buf);
-      let obj; try { obj = piexif.load(bin); } catch { obj = {}; }
-      if (!obj['0th']) obj['0th'] = {}; if (!obj['Exif']) obj['Exif'] = {}; if (!obj['GPS']) obj['GPS'] = {};
+      // Step 1: strip ALL metadata app blocks first (XMP, IPTC, ICC, and EXIF APP1)
+      // This ensures even if piexif.load fails, the original EXIF is gone
+      buf = stripJpegAppBlocks(buf, true); // removeAll=true strips all APP1-APP15
 
-      if (cleanAll) {
-        obj = {'0th':{},'Exif':{},'GPS':{},'Interop':{},'1st':{}};
-      } else {
+      if (!cleanAll) {
+        // Selective clean — re-insert a minimal EXIF with only kept fields
+        // Re-parse original to get field values
+        const origBuf = await (appState.outputs.editor || appState.file).arrayBuffer();
+        const origBin = buf2str(origBuf);
+        let origObj; try { origObj = piexif.load(origBin); } catch { origObj = {}; }
+
+        // Build new EXIF keeping only fields NOT selected for removal
+        const newObj = {'0th':{},'Exif':{},'GPS':{},'Interop':{},'1st':{}};
         const has = c => cats.includes(c);
-        if (has('loc'))      { obj['GPS'] = {}; }
-        if (has('device'))   { [piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ImageIFD.XResolution, piexif.ImageIFD.YResolution].forEach(k => delete obj['0th'][k]); if(obj['Exif']){[piexif.ExifIFD.LensModel,piexif.ExifIFD.ISOSpeedRatings,piexif.ExifIFD.ExposureTime,piexif.ExifIFD.FNumber,piexif.ExifIFD.FocalLength,piexif.ExifIFD.Flash].forEach(k=>delete obj['Exif'][k]);} }
-        if (has('time'))     { delete obj['0th'][piexif.ImageIFD.DateTime]; if(obj['Exif']){[piexif.ExifIFD.DateTimeOriginal,piexif.ExifIFD.DateTimeDigitized,piexif.ExifIFD.OffsetTime].forEach(k=>delete obj['Exif'][k]);} }
-        if (has('software')) { delete obj['0th'][piexif.ImageIFD.Software]; }
-        if (has('author'))   { [piexif.ImageIFD.Artist,piexif.ImageIFD.Copyright,piexif.ImageIFD.ImageDescription].forEach(k=>delete obj['0th'][k]); }
+
+        // Copy fields that should be KEPT (not cleaned)
+        if (!has('device') && origObj['0th']) {
+          [piexif.ImageIFD.Make, piexif.ImageIFD.Model].forEach(k => {
+            if (origObj['0th'][k] != null) newObj['0th'][k] = origObj['0th'][k];
+          });
+        }
+        if (!has('time') && origObj['0th']) {
+          if (origObj['0th'][piexif.ImageIFD.DateTime] != null)
+            newObj['0th'][piexif.ImageIFD.DateTime] = origObj['0th'][piexif.ImageIFD.DateTime];
+        }
+        if (!has('time') && origObj['Exif']) {
+          [piexif.ExifIFD.DateTimeOriginal, piexif.ExifIFD.DateTimeDigitized].forEach(k => {
+            if (origObj['Exif'][k] != null) newObj['Exif'][k] = origObj['Exif'][k];
+          });
+        }
+        if (!has('software') && origObj['0th']) {
+          if (origObj['0th'][piexif.ImageIFD.Software] != null)
+            newObj['0th'][piexif.ImageIFD.Software] = origObj['0th'][piexif.ImageIFD.Software];
+        }
+        if (!has('author') && origObj['0th']) {
+          [piexif.ImageIFD.Artist, piexif.ImageIFD.Copyright, piexif.ImageIFD.ImageDescription].forEach(k => {
+            if (origObj['0th'][k] != null) newObj['0th'][k] = origObj['0th'][k];
+          });
+        }
+        if (!has('loc') && origObj['GPS'] && Object.keys(origObj['GPS']).length) {
+          newObj['GPS'] = origObj['GPS'];
+        }
+
+        // Re-insert kept fields into already-stripped buffer
+        try {
+          const strippedBin = buf2str(buf);
+          const newExifBin = piexif.insert(piexif.dump(newObj), strippedBin);
+          buf = str2buf(newExifBin).buffer;
+        } catch(e) { /* keep stripped buf if insert fails */ }
       }
-
-      const cleaned = piexif.insert(piexif.dump(obj), bin);
-      buf = str2buf(cleaned).buffer;
-
-      // Step 2: strip XMP / IPTC / ICC app blocks from raw JPEG binary
-      buf = stripJpegAppBlocks(buf, cleanAll);
 
       appState.outputs.exif = new Blob([buf], { type: 'image/jpeg' });
     } else {
