@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>PrivacyKit — Photo Tools. One File. No Upload.</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌑</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*:focus{outline:none}
+*:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+[data-theme="dark"]{
+  --bg:#0F0A05;--surface:#1A1208;--surface2:#221808;--sidebar-bg:#130E04;
+  --border:#2E2010;--border2:#3A2A14;
+  --accent:#E8A020;--accent-light:rgba(232,160,32,0.10);
+  --text:#F0E8D8;--text2:#C8B898;--muted:#6A5A40;
+  --success:#4CAF7A;--error:#EF5350;--warning:#FFB74D;
+  --grid:rgba(232,160,32,0.04);--shadow:rgba(0,0,0,0.5);
+  --btn-bg:#E8A020;--btn-text:#0F0A05;
+  --val:#E8A020;--r-card:12px;--r-input:8px;--r-btn:8px;--bw:1px;
+  --ui:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+[data-theme="light"]{
+  --bg:#F9F6F1;--surface:#F0EBE3;--surface2:#E8E1D8;--sidebar-bg:#EFE8DE;
+  --border:#D4C9BD;--border2:#C5B8AA;
+  --accent:#C85A17;--accent-light:rgba(200,90,23,0.08);
+  --text:#2C2C2C;--text2:#5A5A5A;--muted:#8A8A8A;
+  --success:#1E5C38;--error:#8C1F1C;--warning:#D97706;
+  --grid:rgba(0,0,0,0.03);--shadow:rgba(0,0,0,0.08);
+  --btn-bg:#C85A17;--btn-text:#fff;
+  --val:#C85A17;--r-card:12px;--r-input:8px;--r-btn:8px;--bw:1px;
+  --ui:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+[data-theme="retro"]{
+  --bg:#0A0A0A;--surface:#0d0520;--surface2:#130830;--sidebar-bg:#080318;
+  --border:#7c3aed;--border2:#4c1d95;
+  --accent:#fbbf24;--accent-light:rgba(251,191,36,0.10);
+  --text:#f0e8ff;--text2:#c4b5fd;--muted:#6d28d9;
+  --success:#34d399;--error:#f87171;--warning:#fb923c;
+  --grid:rgba(124,58,237,0.08);--shadow:rgba(124,58,237,0.3);
+  --btn-bg:#7c3aed;--btn-text:#fbbf24;
+  --val:#fbbf24;--r-card:0px;--r-input:0px;--r-btn:0px;--bw:2px;
+  --ui:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);display:flex;flex-direction:column;transition:background .3s,color .3s;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0}
+[data-theme="retro"] body::after{content:'';position:fixed;inset:0;background:linear-gradient(180deg,#1a0533 0%,#2d0a5e 25%,#6b1fa8 55%,#1a0533 100%);z-index:-1}
+
+/* ── TOPBAR ── */
+.topbar{height:56px;background:var(--sidebar-bg);border-bottom:var(--bw) solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px var(--shadow);flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
+.brand-icon{width:32px;height:32px;background:var(--accent);border-radius:var(--r-btn);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.brand-name{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);line-height:1}
+[data-theme="retro"] .brand-name{font-family:'Press Start 2P';font-size:10px;color:var(--accent)}
+.brand-sub{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.topbar-center{flex:1;display:flex;align-items:center;justify-content:center}
+
+/* file strip in topbar */
+.topbar-file{display:none;align-items:center;gap:10px;background:var(--surface);border:var(--bw) solid var(--border2);border-radius:var(--r-input);padding:6px 12px;max-width:420px;width:100%}
+.topbar-file.visible{display:flex}
+.topbar-file-thumb{width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--border);flex-shrink:0}
+.topbar-file-info{flex:1;min-width:0}
+.topbar-file-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-file-size{font-size:10px;color:var(--muted);font-family:var(--mono)}
+.topbar-file-btns{display:flex;gap:6px;flex-shrink:0}
+
+.topbar-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+
+/* ── DROPDOWN ── */
+.dropdown{position:relative}
+.dropdown-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border:var(--bw) solid var(--border2);border-radius:var(--r-btn);background:var(--surface);color:var(--text2);font-size:12px;font-family:var(--mono);font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.dropdown-btn:hover{border-color:var(--accent);color:var(--accent)}
+.dropdown-menu{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface2);border:var(--bw) solid var(--border);border-radius:var(--r-card);overflow:hidden;min-width:120px;z-index:500;box-shadow:0 8px 24px var(--shadow);display:none}
+.dropdown-menu.open{display:block}
+.dropdown-item{display:flex;align-items:center;gap:8px;padding:9px 14px;font-size:13px;cursor:pointer;color:var(--text2);transition:all .12s;border-bottom:var(--bw) solid var(--border)}
+.dropdown-item:last-child{border-bottom:none}
+.dropdown-item:hover,.dropdown-item.active{background:var(--accent-light);color:var(--accent)}
+.dropdown-item.active{font-weight:600}
+
+/* ── ICON BUTTON ── */
+.icon-btn{display:flex;align-items:center;gap:6px;padding:7px 12px;border:var(--bw) solid var(--border2);border-radius:var(--r-btn);background:transparent;color:var(--text2);font-size:12px;font-family:var(--ui);cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* ── TOOL TABS ── */
+.tool-tabs{display:none;background:var(--sidebar-bg);border-bottom:var(--bw) solid var(--border);overflow-x:auto;scrollbar-width:none;position:sticky;top:56px;z-index:100;flex-shrink:0}
+.tool-tabs::-webkit-scrollbar{display:none}
+.tool-tabs.visible{display:flex}
+.tool-tab{display:flex;align-items:center;gap:7px;padding:0 22px;height:46px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;flex-shrink:0;user-select:none}
+.tool-tab:hover{color:var(--text2)}
+.tool-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-light)}
+[data-theme="retro"] .tool-tab{font-family:'Press Start 2P';font-size:8px;padding:0 16px}
+
+/* ── MAIN LAYOUT ── */
+.main-wrap{flex:1;overflow-y:auto;position:relative;z-index:1}
+.main-content{max-width:880px;margin:0 auto;padding:32px 24px 80px}
+
+/* ── DROP SCREEN ── */
+.drop-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;padding:40px 24px}
+.drop-hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2}
+[data-theme="retro"] .drop-hero-title{font-family:'Press Start 2P';font-size:18px;color:var(--accent)}
+.drop-hero-sub{color:var(--muted);font-size:14px;margin-bottom:36px;max-width:440px}
+.drop-zone{border:var(--bw) dashed var(--border2);border-radius:var(--r-card);padding:56px 32px;cursor:pointer;background:var(--surface);transition:all .2s;position:relative;width:100%;max-width:520px}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-light)}
+.drop-icon-big{font-size:48px;margin-bottom:16px;display:block}
+.drop-title{font-size:18px;font-weight:600;margin-bottom:6px}
+.drop-sub{color:var(--muted);font-size:13px}
+.drop-badges{display:flex;gap:8px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-input);background:var(--accent-light);border:var(--bw) solid var(--border2);color:var(--text2);font-size:11px;font-family:var(--mono)}
+
+/* ── PANELS ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:var(--bw) solid var(--border);border-radius:var(--r-card);margin-bottom:16px;overflow:hidden}
+.card-header{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:var(--bw) solid var(--border);background:var(--surface2)}
+.card-header-icon{font-size:16px}
+.card-header-title{font-size:12px;font-family:var(--mono);font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2)}
+.card-body{padding:20px}
+
+/* ── META TABLE ── */
+.meta-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1px;background:var(--border)}
+.meta-section{background:var(--surface);padding:16px 18px}
+.meta-section-title{font-size:10px;font-family:var(--mono);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.meta-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)}
+.meta-row:last-child{border-bottom:none}
+.meta-key{color:var(--muted);font-size:11px;flex-shrink:0;padding-top:1px}
+.meta-val{font-family:var(--mono);font-size:11px;color:var(--text);text-align:right;word-break:break-all}
+.meta-val.hi{color:var(--val)}
+.meta-val a{color:var(--accent);text-decoration:none}
+.meta-val a:hover{text-decoration:underline}
+.meta-empty{padding:24px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ── CHIPS ── */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
+.chip{display:flex;align-items:center;gap:5px;padding:6px 13px;border:var(--bw) solid var(--border2);border-radius:20px;font-size:12px;cursor:pointer;background:transparent;color:var(--text2);font-family:var(--ui);transition:all .15s;user-select:none}
+.chip input{display:none}
+.chip.checked{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.chip:hover:not(.checked){border-color:var(--text2)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:var(--r-btn);font-family:var(--ui);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;border:var(--bw) solid transparent;white-space:nowrap}
+.btn-primary{background:var(--btn-bg);color:var(--btn-text);border-color:var(--btn-bg)}
+.btn-primary:hover{opacity:.88}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--text2);border-color:var(--border2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.btn-ghost:disabled{opacity:.3;cursor:not-allowed}
+.btn-success{background:transparent;color:var(--success);border-color:rgba(76,175,122,.4)}
+.btn-success:hover{background:rgba(76,175,122,.1)}
+.btn-success:disabled{opacity:.3;cursor:not-allowed}
+.btn-sm{padding:7px 14px;font-size:12px}
+.action-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:4px}
+
+/* ── FORM FIELDS ── */
+.field-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:16px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.field-input{background:var(--surface2);border:var(--bw) solid var(--border2);border-radius:var(--r-input);padding:9px 12px;color:var(--text);font-family:var(--mono);font-size:12px;width:100%;transition:border-color .15s;outline:none}
+.field-input:focus{border-color:var(--accent)}
+.field-input::placeholder{color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radius:var(--r-input)}
+
+/* ── CROP ── */
+.crop-canvas{display:block;border-radius:var(--r-card);border:var(--bw) solid var(--border2);cursor:crosshair;max-width:100%;touch-action:none}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.preset-btn{padding:6px 14px;border:var(--bw) solid var(--border2);border-radius:var(--r-btn);background:transparent;color:var(--text2);font-size:12px;font-family:var(--mono);cursor:pointer;transition:all .15s}
+.preset-btn:hover,.preset-btn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* ── WATERMARK ── */
+.wm-canvas{display:block;border-radius:var(--r-card);border:var(--bw) solid var(--border2);max-width:100%}
+
+/* ── COMPRESS ── */
+.compress-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.compress-card{background:var(--surface2);border:var(--bw) solid var(--border);border-radius:var(--r-card);padding:18px;text-align:center}
+.compress-card-label{font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.compress-size{font-size:26px;font-weight:700;font-family:var(--mono)}
+.compress-size.green{color:var(--success)}
+.compress-detail{font-size:11px;color:var(--muted);margin-top:4px}
+.quality-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.quality-val{font-family:var(--mono);font-size:15px;color:var(--accent);width:44px;text-align:right;flex-shrink:0}
+
+/* ── STATUS BADGE ── */
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-family:var(--mono);font-weight:700}
+.s-has{background:rgba(232,160,32,.15);color:var(--accent);border:1px solid rgba(232,160,32,.3)}
+.s-clean{background:rgba(76,175,122,.15);color:var(--success);border:1px solid rgba(76,175,122,.3)}
+.s-none{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* ── DIVIDER ── */
+.divider{height:var(--bw);background:var(--border);margin:20px 0}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:var(--bw) solid var(--border2);color:var(--text);padding:11px 20px;border-radius:var(--r-card);font-size:13px;z-index:9999;transition:transform .25s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;pointer-events:none;box-shadow:0 4px 16px var(--shadow)}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ── SPINNER ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:13px;height:13px;border:2px solid rgba(0,0,0,.2);border-top-color:var(--btn-text);border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeIn .25s ease}
+
+/* ── VERIFY REPORT ── */
+.verify-row{display:flex;align-items:center;gap:10px;padding:8px 18px;border-bottom:1px solid var(--border);font-size:12px}
+.verify-row:last-child{border-bottom:none}
+.verify-icon{font-size:14px;flex-shrink:0;width:20px;text-align:center}
+.verify-label{flex:1;color:var(--text2)}
+.verify-status{font-family:var(--mono);font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0}
+.verify-removed{background:rgba(76,175,122,0.15);color:var(--success)}
+.verify-present{background:rgba(232,160,32,0.15);color:var(--accent)}
+.verify-empty{background:var(--surface2);color:var(--muted)}
+
+/* ── RENAME HINT ── */
+.rename-hint{font-family:var(--mono);font-size:12px;color:var(--val);margin-top:6px}
+
+/* ── DROP LOADING ── */
+.drop-zone.loading{pointer-events:none;opacity:.7}
+.drop-zone.loading .drop-icon-big{display:none}
+.drop-loading{display:none;flex-direction:column;align-items:center;gap:14px}
+.drop-zone.loading .drop-loading{display:flex}
+.drop-zone.loading .drop-title,.drop-zone.loading .drop-sub{display:none}
+.drop-spinner{width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+
+@media(max-width:600px){
+  /* ── TOPBAR ── */
+  .topbar{padding:0 10px;gap:6px;height:50px}
+  .brand-sub{display:none}
+  .brand-name{font-size:12px}
+  .icon-btn{display:none}
+  #themeLabel,#langLabel{display:none}
+  .dropdown-btn{padding:6px 8px;gap:2px;font-size:11px}
+
+  /* ── FILE STRIP ── */
+  .topbar-file{max-width:none;padding:5px 8px;gap:6px}
+  .topbar-file-size{display:none}
+  .topbar-file-name{font-size:11px}
+  #stripStatus{font-size:9px;padding:2px 6px}
+  #changeFileLbl,#newPhotoLbl{display:none}
+  .topbar-file-btns .btn{padding:5px 8px;font-size:13px}
+
+  /* ── TOOL TABS ── */
+  .tool-tab{padding:0 14px;font-size:11px;height:40px;gap:4px}
+  .tool-tab span{display:none} /* icon only on mobile */
+
+  /* ── MAIN ── */
+  .main-content{padding:16px 12px 80px}
+
+  /* ── DROP SCREEN ── */
+  .drop-screen{min-height:50vh;padding:24px 16px}
+  .drop-hero-title{font-size:20px;margin-bottom:6px}
+  .drop-hero-sub{font-size:12px;margin-bottom:24px}
+  .drop-zone{padding:36px 16px}
+  .drop-icon-big{font-size:32px;margin-bottom:10px}
+  .drop-title{font-size:15px}
+  .drop-sub{font-size:12px}
+
+  /* ── CARDS ── */
+  .card-header{padding:11px 14px;flex-wrap:wrap;gap:6px}
+  .card-header .btn-sm{padding:5px 10px;font-size:11px}
+  .card-body{padding:14px}
+
+  /* ── META GRID ── */
+  .meta-grid{grid-template-columns:1fr}
+  .meta-key{font-size:11px}
+  .meta-val{font-size:11px}
+
+  /* ── CHIPS ── */
+  .chip{padding:5px 10px;font-size:11px}
+
+  /* ── BUTTONS ── */
+  .btn{padding:9px 14px;font-size:13px}
+  .action-row{gap:8px}
+
+  /* ── FORM FIELDS ── */
+  /* iOS zoom fix — font-size must be >= 16px on inputs */
+  .field-input{font-size:16px !important}
+  input[type=number]{font-size:16px !important}
+  input[type=color]{font-size:16px !important}
+  .wm-input{font-size:16px !important}
+
+  /* ── COMPRESS ── */
+  .compress-cards{grid-template-columns:1fr 1fr;gap:8px}
+  .compress-size{font-size:18px}
+  #compress-preview-wrap{grid-template-columns:1fr}
+
+  /* ── RESIZE ── */
+  .field-grid{grid-template-columns:1fr 1fr}
+
+  /* ── WATERMARK ── */
+  .wm-canvas{touch-action:none}
+
+  /* ── CROP ── */
+  .crop-canvas{touch-action:none}
+  .presets{gap:6px}
+  .preset-btn{padding:5px 10px;font-size:11px}
+
+  /* ── ROTATE ── */
+  #panel-rotate .action-row{flex-wrap:wrap}
+  #panel-rotate .btn{flex:1;min-width:0;justify-content:center}
+}
+
+@media(max-width:400px){
+  #themeDD{display:none}
+  .topbar{gap:4px}
+  .brand-icon{width:26px;height:26px;font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<div class="topbar">
+  <a href="#" class="brand" onclick="goHome();return false">
+    <div class="brand-icon">🌑</div>
+    <div>
+      <div class="brand-name">Privacy<span>Kit</span></div>
+      <div class="brand-sub">by DarkenAmber</div>
+    </div>
+  </a>
+
+  <div class="topbar-center">
+    <div class="topbar-file" id="fileStrip">
+      <img class="topbar-file-thumb" id="stripThumb" src="" alt="">
+      <div class="topbar-file-info">
+        <div class="topbar-file-name" id="stripName">—</div>
+        <div class="topbar-file-size" id="stripMeta">—</div>
+      </div>
+      <div class="topbar-file-btns">
+        <span id="stripStatus" class="status-badge s-has" style="display:none"></span>
+        <button class="btn btn-ghost btn-sm" onclick="triggerReplace()">↩ <span id="changeFileLbl">Change</span></button>
+        <button class="btn btn-ghost btn-sm" onclick="goHome()" title="Load a different photo" style="color:var(--muted)">📂 <span id="newPhotoLbl">New photo</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <!-- Theme dropdown -->
+    <div class="dropdown" id="themeDD">
+      <button class="dropdown-btn" onclick="toggleDD('themeDD')">🎨 <span id="themeLabel">Dark</span> ▾</button>
+      <div class="dropdown-menu" id="themeDD-menu">
+        <div class="dropdown-item active" onclick="setTheme('dark',this)">🌑 Dark</div>
+        <div class="dropdown-item" onclick="setTheme('light',this)">☀️ Light</div>
+        <div class="dropdown-item" onclick="setTheme('retro',this)">👾 Retro</div>
+      </div>
+    </div>
+    <!-- Lang dropdown -->
+    <div class="dropdown" id="langDD">
+      <button class="dropdown-btn" onclick="toggleDD('langDD')">🌐 <span id="langLabel">EN</span> ▾</button>
+      <div class="dropdown-menu" id="langDD-menu">
+        <div class="dropdown-item active" onclick="setLang('en',this)">🇬🇧 English</div>
+        <div class="dropdown-item" onclick="setLang('ru',this)">🇷🇺 Русский</div>
+      </div>
+    </div>
+    <a href="https://github.com/darkenamber/privacykit" target="_blank" class="icon-btn">⭐ <span>GitHub</span></a>
+    <a href="https://ko-fi.com/darkenamber" target="_blank" class="icon-btn">☕ <span>Ko-fi</span></a>
+  </div>
+</div>
+
+<!-- ══ TOOL TABS ══ -->
+<div class="tool-tabs" id="toolTabs">
+  <div class="tool-tab active" onclick="switchTab('exif')" id="tab-exif">🔍 <span>EXIF</span></div>
+  <div class="tool-tab" onclick="switchTab('editor')" id="tab-editor">✏️ <span id="tabEditorLbl">Editor</span></div>
+  <div class="tool-tab" onclick="switchTab('crop')" id="tab-crop">✂️ Crop</div>
+  <div class="tool-tab" onclick="switchTab('rotate')" id="tab-rotate">🔄 <span id="tabRotateLbl">Rotate</span></div>
+  <div class="tool-tab" onclick="switchTab('resize')" id="tab-resize">📐 <span id="tabResizeLbl">Resize</span></div>
+  <div class="tool-tab" onclick="switchTab('watermark')" id="tab-watermark">🌊 Watermark</div>
+  <div class="tool-tab" onclick="switchTab('compress')" id="tab-compress">🗜️ Compress</div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main-wrap">
+<div class="main-content">
+
+  <!-- DROP SCREEN -->
+  <div id="dropScreen" class="drop-screen">
+    <h1 class="drop-hero-title" id="heroTitle">Photo Tools.<br>One File. No Upload.</h1>
+    <p class="drop-hero-sub" id="heroSub">EXIF cleaner · metadata editor · crop · rotate · resize · watermark · compress — all offline in your browser.</p>
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept="image/*">
+      <span class="drop-icon-big" id="dropIcon">📷</span>
+      <div class="drop-title" id="dropTitle">Drop your photo here</div>
+      <div class="drop-sub" id="dropSub">or click to select · JPEG, PNG, WEBP, HEIC</div>
+      <div class="drop-loading">
+        <div class="drop-spinner"></div>
+        <div style="font-size:13px;color:var(--muted)" id="dropLoadingLbl">Loading…</div>
+      </div>
+    </div>
+    <div class="drop-badges" style="margin-top:20px">
+      <span class="badge">🔒 100% offline</span>
+      <span class="badge">🆓 Free forever</span>
+      <span class="badge">📁 Single HTML file</span>
+    </div>
+  </div>
+
+  <input type="file" id="replaceInput" accept="image/*" style="display:none" onchange="handleReplace(this)">
+
+  <!-- ══ PANEL: EXIF ══ -->
+  <div class="panel" id="panel-exif">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">🔍</span>
+        <span class="card-header-title" id="exifCardTitle">Metadata found in this photo</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('exif')">↺ Reset</button>
+      </div>
+      <div id="exif-output"></div>
+    </div>
+
+    <!-- Verification report — shown after clean -->
+    <div id="exif-clean-result" style="display:none;margin-bottom:16px">
+      <div style="border-radius:var(--r-card);border:var(--bw) solid rgba(76,175,122,0.4);overflow:hidden">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:10px;padding:13px 18px;background:rgba(76,175,122,0.12);border-bottom:var(--bw) solid rgba(76,175,122,0.25)">
+          <span style="font-size:18px">✅</span>
+          <div style="flex:1">
+            <div style="font-weight:600;color:var(--success);font-size:14px" id="cleanResultTitle">Cleaned — verification report</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px" id="cleanResultSub">Original file on your disk is unchanged</div>
+          </div>
+        </div>
+        <!-- Report rows -->
+        <div id="verify-report" style="padding:4px 0"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">🧹</span>
+        <span class="card-header-title" id="cleanCardTitle">Clean metadata</span>
+      </div>
+      <div class="card-body">
+        <div class="chips" id="exif-chips">
+          <label class="chip checked" onclick="toggleChip(this)"><input type="checkbox" checked value="all">✅ <span id="chipAll">All</span></label>
+          <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="loc">📍 <span id="chipLoc">Location</span></label>
+          <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="device">📷 <span id="chipDevice">Device</span></label>
+          <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="time">🕐 <span id="chipTime">Time</span></label>
+          <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="software">🛠 <span id="chipSoftware">Software</span></label>
+          <label class="chip" onclick="toggleChip(this)"><input type="checkbox" value="author">✍️ <span id="chipAuthor">Author</span></label>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="cleanExif()" id="exif-clean-btn">🧹 <span id="cleanBtnLbl">Clean EXIF</span></button>
+          <button class="btn btn-success" onclick="downloadResult('exif')" id="exif-dl-btn" disabled>⬇ <span id="exifDlLbl">Download</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: EDITOR ══ -->
+  <div class="panel" id="panel-editor">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">✏️</span>
+        <span class="card-header-title" id="editorCardTitle">Edit metadata fields</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('editor')">↺ Reset</button>
+      </div>
+      <div class="card-body">
+        <div class="field-grid">
+          <div class="field"><label class="field-label" id="lbArtist">Author / Artist</label><input class="field-input" id="ed-artist" placeholder="—"></div>
+          <div class="field"><label class="field-label" id="lbCopyright">Copyright</label><input class="field-input" id="ed-copyright" placeholder="—"></div>
+          <div class="field"><label class="field-label" id="lbDesc">Description</label><input class="field-input" id="ed-desc" placeholder="—"></div>
+          <div class="field"><label class="field-label" id="lbSoftware">Software</label><input class="field-input" id="ed-software" placeholder="—"></div>
+          <div class="field"><label class="field-label" id="lbLat">GPS Latitude</label><input class="field-input" id="ed-lat" placeholder="40.409264"></div>
+          <div class="field"><label class="field-label" id="lbLng">GPS Longitude</label><input class="field-input" id="ed-lng" placeholder="49.867092"></div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="saveEdits()">✓ <span id="saveBtnLbl">Save changes</span></button>
+          <button class="btn btn-success" onclick="downloadResult('editor')" id="editor-dl-btn" disabled>⬇ <span id="editorDlLbl">Download</span></button>
+        </div>
+        <div class="divider"></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)">
+          <span id="renameLbl">Rename by date taken:</span>
+          <span class="rename-hint" id="renamePreview">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: CROP ══ -->
+  <div class="panel" id="panel-crop">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">✂️</span>
+        <span class="card-header-title" id="cropCardTitle">Crop photo</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('crop')">↺ Reset</button>
+      </div>
+      <div class="card-body">
+        <div class="presets" id="crop-presets">
+          <button class="preset-btn active" onclick="setCropPreset('free',this)" id="cropFreeBtn">Free</button>
+          <button class="preset-btn" onclick="setCropPreset('1:1',this)">1 : 1</button>
+          <button class="preset-btn" onclick="setCropPreset('4:3',this)">4 : 3</button>
+          <button class="preset-btn" onclick="setCropPreset('16:9',this)">16 : 9</button>
+          <button class="preset-btn" onclick="setCropPreset('9:16',this)">9 : 16</button>
+          <button class="preset-btn" onclick="setCropPreset('4:5',this)">4 : 5</button>
+        </div>
+        <div style="overflow:auto;margin-bottom:14px">
+          <canvas id="crop-canvas" class="crop-canvas"></canvas>
+        </div>
+        <!-- Result preview appears after crop applied -->
+        <div id="crop-result-wrap" style="display:none;margin-bottom:16px">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px" id="cropResultLbl">Result preview</div>
+          <img id="crop-result-img" style="max-width:100%;border-radius:var(--r-card);border:var(--bw) solid var(--border2)" alt="crop result">
+          <div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:6px" id="crop-result-info"></div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="applyCrop()">✂️ <span id="cropApplyLbl">Crop</span></button>
+          <button class="btn btn-ghost" onclick="resetCrop()">↺ <span id="cropResetLbl">Reset selection</span></button>
+          <button class="btn btn-success" onclick="downloadResult('crop')" id="crop-dl-btn" disabled>⬇ <span id="cropDlLbl">Download</span></button>
+          <span style="font-size:12px;color:var(--muted);font-family:var(--mono)" id="crop-info"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: WATERMARK ══ -->
+  <div class="panel" id="panel-watermark">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">🌊</span>
+        <span class="card-header-title" id="wmCardTitle">Add watermark</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('watermark')">↺ Reset</button>
+      </div>
+      <div class="card-body">
+        <div class="field-grid" style="margin-bottom:16px">
+          <div class="field"><label class="field-label" id="lbWmText">Text</label><input class="field-input" id="wm-text" placeholder="© PrivacyKit" oninput="renderWatermark()"></div>
+          <div class="field"><label class="field-label" id="lbWmColor">Color</label><input type="color" class="field-input" id="wm-color" value="#ffffff" oninput="renderWatermark()"></div>
+          <div class="field">
+            <label class="field-label">Size: <span id="wm-size-val">32</span>px</label>
+            <input type="range" id="wm-size" min="10" max="160" value="32" oninput="wmTransform.sizePx=parseInt(this.value);document.getElementById('wm-size-val').textContent=this.value;renderWatermark()">
+          </div>
+          <div class="field">
+            <label class="field-label" id="lbWmOpacity">Opacity: <span id="wm-opacity-val">70</span>%</label>
+            <input type="range" id="wm-opacity" min="5" max="100" value="70" oninput="document.getElementById('wm-opacity-val').textContent=this.value;renderWatermark()">
+          </div>
+          <div class="field">
+            <label class="field-label" id="lbWmTile">Tile</label>
+            <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:13px;color:var(--text2)">
+              <input type="checkbox" id="wm-tile" onchange="renderWatermark()" style="accent-color:var(--accent);width:16px;height:16px">
+              <span id="wmTileLbl">Cover entire photo</span>
+            </label>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px" id="wmDragHint">💡 Drag to move · Pinch to resize · Two fingers rotate</p>
+        <div style="overflow:auto;margin-bottom:8px;position:relative">
+          <canvas id="wm-canvas" class="wm-canvas" style="cursor:move"></canvas>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:12px" id="wm-transform-info"></div>
+        <div class="action-row">
+          <button class="btn btn-success" onclick="downloadResult('watermark')" id="wm-dl-btn">⬇ <span id="wmDlLbl">Download with watermark</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: COMPRESS ══ -->
+  <div class="panel" id="panel-compress">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">🗜️</span>
+        <span class="card-header-title" id="compressCardTitle">Compress photo</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('compress')">↺ Reset</button>
+      </div>
+      <div class="card-body">
+        <!-- Stats row -->
+        <div class="compress-cards">
+          <div class="compress-card">
+            <div class="compress-card-label" id="lbBefore">Before</div>
+            <div class="compress-size" id="compress-before">—</div>
+            <div class="compress-detail" id="compress-before-res">—</div>
+          </div>
+          <div class="compress-card">
+            <div class="compress-card-label" id="lbAfter">After</div>
+            <div class="compress-size green" id="compress-after">—</div>
+            <div class="compress-detail" id="compress-saving">—</div>
+          </div>
+        </div>
+        <!-- Quality slider -->
+        <div class="quality-row">
+          <span style="font-size:13px;color:var(--text2)" id="lbQuality">Quality:</span>
+          <input type="range" style="flex:1" id="compress-quality" min="10" max="100" value="82"
+            oninput="document.getElementById('compress-quality-val').textContent=this.value+'%';updateCompress()">
+          <span class="quality-val" id="compress-quality-val">82%</span>
+        </div>
+        <!-- Side-by-side preview -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px" id="compress-preview-wrap">
+          <div>
+            <div style="font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px" id="lbCompressOriginal">Original</div>
+            <img id="compress-img-before" style="width:100%;border-radius:var(--r-card);border:var(--bw) solid var(--border2);display:block" alt="original">
+          </div>
+          <div>
+            <div style="font-size:10px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px" id="lbCompressResult">Compressed</div>
+            <img id="compress-img-after" style="width:100%;border-radius:var(--r-card);border:var(--bw) solid var(--border2);display:block" alt="compressed">
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-success" onclick="downloadResult('compress')" id="compress-dl-btn" disabled>⬇ <span id="compressDlLbl">Download compressed</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: ROTATE ══ -->
+  <div class="panel" id="panel-rotate">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">🔄</span>
+        <span class="card-header-title" id="rotateCardTitle">Rotate &amp; Flip</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('rotate')">↺ Reset</button>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+          <button class="btn btn-ghost" onclick="applyRotate(90)">↻ 90°</button>
+          <button class="btn btn-ghost" onclick="applyRotate(180)">↻ 180°</button>
+          <button class="btn btn-ghost" onclick="applyRotate(270)">↺ 270°</button>
+          <div style="width:1px;background:var(--border);margin:0 4px"></div>
+          <button class="btn btn-ghost" onclick="applyFlip('h')">⇄ <span id="flipHLbl">Flip H</span></button>
+          <button class="btn btn-ghost" onclick="applyFlip('v')">⇅ <span id="flipVLbl">Flip V</span></button>
+        </div>
+        <div style="overflow:auto;margin-bottom:16px;text-align:center">
+          <canvas id="rotate-canvas" style="max-width:100%;border-radius:var(--r-card);border:var(--bw) solid var(--border2)"></canvas>
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:12px" id="rotate-info"></div>
+        <div class="action-row">
+          <button class="btn btn-success" onclick="downloadResult('rotate')" id="rotate-dl-btn" disabled>⬇ <span id="rotateDlLbl">Download</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: RESIZE ══ -->
+  <div class="panel" id="panel-resize">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-header-icon">📐</span>
+        <span class="card-header-title" id="resizeCardTitle">Resize photo</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="resetPanel('resize')">↺ Reset</button>
+      </div>
+      <div class="card-body">
+        <!-- Presets -->
+        <div style="margin-bottom:16px">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px" id="resizePresetsLbl">Quick presets</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="preset-btn" onclick="applyResizePreset(1920,1080,this)">1920×1080</button>
+            <button class="preset-btn" onclick="applyResizePreset(1280,720,this)">1280×720</button>
+            <button class="preset-btn" onclick="applyResizePreset(800,600,this)">800×600</button>
+            <button class="preset-btn" onclick="applyResizePreset(1080,1080,this)">1080×1080</button>
+            <button class="preset-btn" onclick="applyResizePresetPct(75,this)">75%</button>
+            <button class="preset-btn" onclick="applyResizePresetPct(50,this)">50%</button>
+            <button class="preset-btn" onclick="applyResizePresetPct(25,this)">25%</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <!-- Custom size -->
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+          <div class="field" style="width:120px">
+            <label class="field-label" id="resizeWLbl">Width (px)</label>
+            <input class="field-input" type="number" id="resize-w" min="1" max="10000" oninput="syncResizeDim('w')">
+          </div>
+          <div style="font-size:20px;color:var(--muted);padding-top:18px">×</div>
+          <div class="field" style="width:120px">
+            <label class="field-label" id="resizeHLbl">Height (px)</label>
+            <input class="field-input" type="number" id="resize-h" min="1" max="10000" oninput="syncResizeDim('h')">
+          </div>
+          <div class="field" style="padding-top:18px">
+            <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--text2)">
+              <input type="checkbox" id="resize-lock" checked style="accent-color:var(--accent);width:15px;height:15px">
+              <span id="resizeLockLbl">Lock ratio</span>
+            </label>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-family:var(--mono);margin-bottom:16px" id="resize-info"></div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="applyResize()" id="resizeApplyBtn">📐 <span id="resizeApplyLbl">Resize</span></button>
+          <button class="btn btn-success" onclick="downloadResult('resize')" id="resize-dl-btn" disabled>⬇ <span id="resizeDlLbl">Download</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+</div><!-- /main-wrap -->
+
+<!-- FOOTER -->
+<div style="border-top:var(--bw) solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:16px;color:var(--muted);font-size:12px;background:var(--sidebar-bg);flex-shrink:0;position:relative;z-index:1">
+  <span>© 2025 DarkenAmber · MIT</span>
+  <a href="https://github.com/darkenamber/privacykit" target="_blank" style="color:var(--muted);text-decoration:none">⭐ GitHub</a>
+  <a href="https://darkenamber.com/tools" target="_blank" style="color:var(--muted);text-decoration:none">🛠 darkenamber.com</a>
+  <a href="https://ko-fi.com/darkenamber" target="_blank" style="color:var(--accent);text-decoration:none">☕ <span id="footerSupport">Support the project</span></a>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// I18N
+// ══════════════════════════════════════════════════════
+const STRINGS = {
+  en: {
+    heroTitle:'Photo Tools. One File. No Upload.',
+    heroSub:'EXIF cleaner · metadata editor · crop · rotate · resize · watermark · compress — all offline in your browser.',
+    dropTitle:'Drop your photo here',
+    dropSub:'or click to select · JPEG, PNG, WEBP, HEIC',
+    changeFileLbl:'Change',
+    exifCardTitle:'Metadata found in this photo',
+    cleanCardTitle:'Clean metadata',
+    chipAll:'All',chipLoc:'Location',chipDevice:'Device',chipTime:'Time',chipSoftware:'Software',chipAuthor:'Author',
+    cleanBtnLbl:'Clean EXIF',exifDlLbl:'Download',
+    editorCardTitle:'Edit metadata fields',
+    lbArtist:'Author / Artist',lbCopyright:'Copyright',lbDesc:'Description',lbSoftware:'Software',lbLat:'GPS Latitude',lbLng:'GPS Longitude',
+    saveBtnLbl:'Save changes',editorDlLbl:'Download',
+    renameLbl:'Rename by date taken:',
+    cropCardTitle:'Crop photo',cropFreeBtn:'Free',cropApplyLbl:'Crop',cropResetLbl:'Reset',cropDlLbl:'Download',
+    wmCardTitle:'Add watermark',lbWmText:'Text',lbWmColor:'Color',lbWmOpacity:'Opacity',lbWmPos:'Position',lbWmTile:'Tile',wmTileLbl:'Cover entire photo',wmDragHint:'💡 Drag to move · Pinch to resize · Two fingers rotate',wmDlLbl:'Download with watermark',tabEditorLbl:'Editor',
+    compressCardTitle:'Compress photo',lbBefore:'Before',lbAfter:'After',lbQuality:'Quality:',compressDlLbl:'Download compressed',
+    lbCompressOriginal:'Original', lbCompressResult:'Compressed',
+    cropResultLbl:'Result preview',
+    footerSupport:'Support the project',
+    themeLabel:'Dark',langLabel:'EN',
+    sHas:'has EXIF',sClean:'✓ cleaned',sNone:'no EXIF',
+    toastCleaned:'✓ EXIF cleaned',toastSaved:'✓ Saved',toastCropped:'✓ Cropped',
+    renameNone:'no date', dropLoadingLbl:'Loading…',
+    newPhotoLbl:'New photo',
+    cleanResultTitle:'Cleaned — verification report',
+    cleanResultSub:'Original file on your disk is unchanged',
+    verifyLoc:'GPS Location', verifyDevice:'Device info', verifyTime:'Timestamps',
+    verifySoftware:'Software', verifyAuthor:'Author / Copyright',
+    verifyIcc:'Color profile (ICC)', verifyIccNote:'not sensitive',
+    verifyRemoved:'REMOVED', verifyPresent:'PRESENT', verifyWasEmpty:'was empty',
+    tabRotateLbl:'Rotate', tabResizeLbl:'Resize',
+    rotateCardTitle:'Rotate & Flip',
+    flipHLbl:'Flip H', flipVLbl:'Flip V',
+    rotateDlLbl:'Download',
+    resizeCardTitle:'Resize photo',
+    resizePresetsLbl:'Quick presets',
+    resizeWLbl:'Width (px)', resizeHLbl:'Height (px)',
+    resizeLockLbl:'Lock ratio',
+    resizeApplyLbl:'Resize', resizeDlLbl:'Download',
+    toastRotated:'✓ Done', toastResized:'✓ Resized',
+    metaLoc:'Location',metaDevice:'Device',metaTime:'Time',metaSW:'Software',metaFile:'File',metaAuthor:'Author',
+    lat:'Latitude',lng:'Longitude',alt:'Altitude',maps:'📍 Map',
+    make:'Make',model:'Model',lens:'Lens',iso:'ISO',shutter:'Shutter',aperture:'Aperture',focal:'Focal length',flash:'Flash',
+    dateOrig:'Date taken',dateMod:'Modified',tz:'Timezone',sw:'Editor',
+    width:'Width',height:'Height',cs:'Color space',orient:'Orientation',
+    artist:'Author',copyright:'Copyright',desc:'Description',
+    noMeta:'No metadata found in this photo',yes:'yes',no:'no',
+    filename:'Filename', filesize:'File size', mimetype:'MIME type', megapixels:'Megapixels',
+  },
+  ru: {
+    heroTitle:'Инструменты для фото. Один файл. Без загрузки.',
+    heroSub:'EXIF · редактор · кадрирование · поворот · размер · ватермарк · сжатие — всё офлайн в браузере.',
+    dropTitle:'Перетащите фото сюда',
+    dropSub:'или нажмите · JPEG, PNG, WEBP, HEIC',
+    changeFileLbl:'Заменить',
+    exifCardTitle:'Метаданные в этом фото',
+    cleanCardTitle:'Очистка метаданных',
+    chipAll:'Всё',chipLoc:'Локация',chipDevice:'Устройство',chipTime:'Время',chipSoftware:'ПО',chipAuthor:'Автор',
+    cleanBtnLbl:'Очистить EXIF',exifDlLbl:'Скачать',
+    editorCardTitle:'Редактировать метаданные',
+    lbArtist:'Автор',lbCopyright:'Copyright',lbDesc:'Описание',lbSoftware:'Программа',lbLat:'GPS широта',lbLng:'GPS долгота',
+    saveBtnLbl:'Сохранить',editorDlLbl:'Скачать',
+    renameLbl:'Переименовать по дате:',
+    cropCardTitle:'Обрезка фото',cropFreeBtn:'Свободно',cropApplyLbl:'Обрезать',cropResetLbl:'Сбросить',cropDlLbl:'Скачать',
+    wmCardTitle:'Добавить ватермарк',lbWmText:'Текст',lbWmColor:'Цвет',lbWmOpacity:'Прозрачность',lbWmPos:'Позиция',lbWmTile:'Плитка',wmTileLbl:'По всему фото',wmDragHint:'💡 Тянуть — переместить · Щипок — размер · 2 пальца — поворот',wmDlLbl:'Скачать с ватермарком',tabEditorLbl:'Редактор',
+    compressCardTitle:'Сжатие фото',lbBefore:'До',lbAfter:'После',lbQuality:'Качество:',compressDlLbl:'Скачать сжатое',
+    lbCompressOriginal:'Оригинал', lbCompressResult:'Сжатое',
+    cropResultLbl:'Результат обрезки',
+    footerSupport:'Поддержать проект',
+    themeLabel:'Тёмная',langLabel:'RU',
+    sHas:'есть EXIF',sClean:'✓ очищено',sNone:'нет EXIF',
+    toastCleaned:'✓ EXIF очищен',toastSaved:'✓ Сохранено',toastCropped:'✓ Обрезано',
+    renameNone:'нет даты', dropLoadingLbl:'Загрузка…',
+    newPhotoLbl:'Новое фото',
+    cleanResultTitle:'Очищено — отчёт верификации',
+    cleanResultSub:'Оригинал на диске не изменён',
+    verifyLoc:'GPS координаты', verifyDevice:'Устройство', verifyTime:'Временные метки',
+    verifySoftware:'Программы', verifyAuthor:'Автор / Copyright',
+    verifyIcc:'Цветовой профиль (ICC)', verifyIccNote:'не приватные данные',
+    verifyRemoved:'УДАЛЕНО', verifyPresent:'ОСТАЛСЯ', verifyWasEmpty:'не было',
+    tabRotateLbl:'Поворот', tabResizeLbl:'Размер',
+    rotateCardTitle:'Поворот и отражение',
+    flipHLbl:'По горизонтали', flipVLbl:'По вертикали',
+    rotateDlLbl:'Скачать',
+    resizeCardTitle:'Изменить размер',
+    resizePresetsLbl:'Быстрые пресеты',
+    resizeWLbl:'Ширина (px)', resizeHLbl:'Высота (px)',
+    resizeLockLbl:'Сохранить пропорции',
+    resizeApplyLbl:'Изменить размер', resizeDlLbl:'Скачать',
+    toastRotated:'✓ Готово', toastResized:'✓ Размер изменён',
+    metaLoc:'Локация',metaDevice:'Устройство',metaTime:'Время',metaSW:'Программы',metaFile:'Файл',metaAuthor:'Автор',
+    lat:'Широта',lng:'Долгота',alt:'Высота',maps:'📍 Карта',
+    make:'Производитель',model:'Модель',lens:'Объектив',iso:'ISO',shutter:'Выдержка',aperture:'Диафрагма',focal:'Фокусное',flash:'Вспышка',
+    dateOrig:'Снято',dateMod:'Изменено',tz:'Часовой пояс',sw:'Редактор',
+    width:'Ширина',height:'Высота',cs:'Цвет. пространство',orient:'Ориентация',
+    artist:'Автор',copyright:'Copyright',desc:'Описание',
+    noMeta:'Метаданные не найдены',yes:'да',no:'нет',
+    filename:'Имя файла', filesize:'Размер файла', mimetype:'Тип файла', megapixels:'Мегапиксели',
+  }
+};
+
+let currentLang = 'en';
+const s = () => STRINGS[currentLang];
+
+function applyStrings() {
+  const L = s();
+  const ids = ['heroSub','dropTitle','dropSub','dropLoadingLbl','changeFileLbl','newPhotoLbl','exifCardTitle','cleanCardTitle',
+    'chipAll','chipLoc','chipDevice','chipTime','chipSoftware','chipAuthor','cleanBtnLbl','exifDlLbl',
+    'cleanResultTitle','cleanResultSub',
+    'tabEditorLbl','editorCardTitle','lbArtist','lbCopyright','lbDesc','lbSoftware','lbLat','lbLng','saveBtnLbl','editorDlLbl',
+    'renameLbl','cropCardTitle','cropFreeBtn','cropApplyLbl','cropResetLbl','cropDlLbl','cropResultLbl',
+    'tabRotateLbl','tabResizeLbl','rotateCardTitle','flipHLbl','flipVLbl','rotateDlLbl',
+    'resizeCardTitle','resizePresetsLbl','resizeWLbl','resizeHLbl','resizeLockLbl','resizeApplyLbl','resizeDlLbl',
+    'wmCardTitle','lbWmText','lbWmColor','lbWmOpacity','lbWmTile','wmTileLbl','wmDragHint','wmDlLbl',
+    'compressCardTitle','lbBefore','lbAfter','lbQuality','compressDlLbl','lbCompressOriginal','lbCompressResult',
+    'footerSupport','langLabel'];
+  ids.forEach(id => { const el = document.getElementById(id); if (el && L[id]) el.textContent = L[id]; });
+  // heroTitle may contain <br> in HTML default — use innerHTML for it
+  const heroEl = document.getElementById('heroTitle');
+  if (heroEl && L.heroTitle) heroEl.innerHTML = L.heroTitle.replace(/\n/g, '<br>');
+  updateStripStatus();
+  if (appState.file) { renderExifOutput(); updateRenamePreview(); }
+}
+
+function setLang(l, el) {
+  currentLang = l;
+  document.documentElement.lang = l;
+  document.querySelectorAll('#langDD-menu .dropdown-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('langLabel').textContent = l.toUpperCase();
+  closeAllDD();
+  applyStrings();
+}
+
+// ══════════════════════════════════════════════════════
+// THEME
+// ══════════════════════════════════════════════════════
+const themeNames = { dark:'Dark', light:'Light', retro:'Retro' };
+function setTheme(t, el) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('#themeDD-menu .dropdown-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('themeLabel').textContent = themeNames[t];
+  closeAllDD();
+}
+
+// ══════════════════════════════════════════════════════
+// DROPDOWN
+// ══════════════════════════════════════════════════════
+function toggleDD(id) {
+  const menu = document.getElementById(id + '-menu');
+  const wasOpen = menu.classList.contains('open');
+  closeAllDD();
+  if (!wasOpen) menu.classList.add('open');
+}
+function closeAllDD() { document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('open')); }
+document.addEventListener('click', e => { if (!e.target.closest('.dropdown')) closeAllDD(); });
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+const appState = { file:null, exif:{}, img:null, outputs:{exif:null,editor:null,crop:null,watermark:null,compress:null,rotate:null,resize:null}, wmPos:'bc', cropRatio:null };
+
+// ══════════════════════════════════════════════════════
+// DROP ZONE
+// ══════════════════════════════════════════════════════
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+function triggerReplace() { document.getElementById('replaceInput').click(); }
+function handleReplace(inp) { if (inp.files[0]) loadFile(inp.files[0]); inp.value = ''; }
+
+async function loadFile(file) {
+  appState.file = file;
+  appState.outputs = { exif:null, editor:null, crop:null, watermark:null, compress:null, rotate:null, resize:null };
+  appState.cropRatio = null;
+
+  // Show loading state on dropzone
+  document.getElementById('dropZone').classList.add('loading');
+
+  await Promise.all([
+    parseExif(file),
+    loadSourceImage(file)
+  ]);
+
+  prepareUI();
+  initTools();
+}
+
+async function parseExif(file) {
+  try {
+    const raw = await exifr.parse(file, {
+      tiff:true, xmp:true, icc:true, iptc:true,
+      gps:true, exif:true, makerNote:false,
+      translateValues:false, reviveValues:true, mergeOutput:true
+    });
+    appState.exif = raw || {};
+  } catch(e) { console.warn('EXIF parse error:', e); appState.exif = {}; }
+}
+
+async function loadSourceImage(file) {
+  const url = createURL('source', file);
+  appState.img = await loadImg(url);
+}
+
+function prepareUI() {
+  document.getElementById('dropZone').classList.remove('loading');
+  document.getElementById('dropScreen').style.display = 'none';
+  document.getElementById('toolTabs').classList.add('visible');
+  document.getElementById('exif-clean-result').style.display = 'none';
+  showFileStrip();
+  switchTab('exif');
+}
+
+function initTools() {
+  populateEditorFields();
+  updateRenamePreview();
+  initCrop();
+  initCompress();
+}
+
+function loadImg(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => res(img);
+    img.onerror = rej;
+    img.src = src;
+  });
+}
+
+function goHome() {
+  appState.file = null; appState.exif = {}; appState.img = null;
+  appState.outputs = { exif:null, editor:null, crop:null, watermark:null, compress:null, rotate:null, resize:null };
+  ['thumb','source','crop','crop-preview','compress-preview','watermark','compress','rotate','resize'].forEach(k => revokeURL(k));
+  document.getElementById('dropScreen').style.display = '';
+  document.getElementById('dropZone').classList.remove('loading');
+  document.getElementById('fileStrip').classList.remove('visible');
+  document.getElementById('toolTabs').classList.remove('visible');
+  document.getElementById('exif-output').innerHTML = '';
+  document.getElementById('exif-clean-result').style.display = 'none';
+  document.getElementById('crop-result-wrap').style.display = 'none';
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+}
+
+// ══════════════════════════════════════════════════════
+// FILE STRIP
+// ══════════════════════════════════════════════════════
+function showFileStrip() {
+  const strip = document.getElementById('fileStrip');
+  strip.classList.add('visible');
+  document.getElementById('stripThumb').src = createURL('thumb', appState.file);
+  document.getElementById('stripName').textContent = appState.file.name;
+  document.getElementById('stripMeta').textContent = formatSize(appState.file.size) + ' · ' + (appState.img ? appState.img.naturalWidth + '×' + appState.img.naturalHeight : '');
+  updateStripStatus();
+}
+function updateStripStatus() {
+  const el = document.getElementById('stripStatus');
+  if (!appState.file) { el.style.display='none'; return; }
+  el.style.display = 'inline-flex';
+  const L = s();
+  if (appState.outputs.exif) { el.className='status-badge s-clean'; el.textContent=L.sClean; }
+  else if (Object.keys(appState.exif).length > 0) { el.className='status-badge s-has'; el.textContent=L.sHas; }
+  else { el.className='status-badge s-none'; el.textContent=L.sNone; }
+}
+
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-' + name);
+  if (tab) tab.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + name);
+  if (panel) panel.classList.add('active');
+  if (name === 'exif') renderExifOutput();
+  if (name === 'watermark') {
+    wmTransform.sizePx = parseInt(document.getElementById('wm-size').value) || 32;
+    renderWatermark();
+    initWmDrag();
+  }
+  if (name === 'compress') updateCompress();
+  if (name === 'crop') drawCropCanvas();
+  if (name === 'rotate') initRotate();
+  if (name === 'resize') initResize();
+}
+
+// ══════════════════════════════════════════════════════
+// EXIF OUTPUT
+// ══════════════════════════════════════════════════════
+function renderExifOutput() {
+  const L = s();
+  const e = appState.exif;
+  const out = document.getElementById('exif-output');
+  const sections = [];
+
+  const loc = [];
+  if (e.latitude != null) loc.push([L.lat, e.latitude.toFixed(6), true]);
+  if (e.longitude != null) loc.push([L.lng, e.longitude.toFixed(6), true]);
+  if (e.GPSAltitude != null) loc.push([L.alt, e.GPSAltitude.toFixed(1) + ' m', false]);
+  if (e.latitude && e.longitude) loc.push([L.maps, `<a href="https://maps.google.com/?q=${e.latitude},${e.longitude}" target="_blank">→ Google Maps</a>`, false]);
+  if (loc.length) sections.push({ t: L.metaLoc, icon:'📍', rows:loc });
+
+  const dev = [];
+  if (e.Make) dev.push([L.make, esc(e.Make), false]);
+  if (e.Model) dev.push([L.model, esc(e.Model), false]);
+  if (e.LensModel) dev.push([L.lens, esc(e.LensModel), false]);
+  if (e.ISO != null) dev.push([L.iso, String(e.ISO), false]);
+  if (e.ExposureTime) dev.push([L.shutter, fmtShutter(e.ExposureTime), false]);
+  if (e.FNumber) dev.push([L.aperture, 'f/' + e.FNumber, false]);
+  if (e.FocalLength) dev.push([L.focal, e.FocalLength + ' mm', false]);
+  if (e.Flash != null) dev.push([L.flash, e.Flash ? L.yes : L.no, false]);
+  if (dev.length) sections.push({ t: L.metaDevice, icon:'📷', rows:dev });
+
+  const time = [];
+  if (e.DateTimeOriginal) time.push([L.dateOrig, fmtDate(e.DateTimeOriginal), false]);
+  if (e.DateTime) time.push([L.dateMod, fmtDate(e.DateTime), false]);
+  if (e.OffsetTime) time.push([L.tz, esc(String(e.OffsetTime)), false]);
+  if (time.length) sections.push({ t: L.metaTime, icon:'🕐', rows:time });
+
+  const sw = [];
+  if (e.Software) sw.push([L.sw, esc(String(e.Software)), false]);
+  if (sw.length) sections.push({ t: L.metaSW, icon:'🛠', rows:sw });
+
+  // File info — always shown, from img + file object
+  const fi = [];
+  const imgEl = appState.img;
+  const fileObj = appState.file;
+  const w = e.ImageWidth || e.ExifImageWidth || imgEl?.naturalWidth;
+  const h = e.ImageHeight || e.ExifImageHeight || imgEl?.naturalHeight;
+  if (fileObj) fi.push([L.filename, esc(fileObj.name), false]);
+  if (fileObj) fi.push([L.filesize, formatSize(fileObj.size), false]);
+  if (fileObj) fi.push([L.mimetype, fileObj.type || 'image/jpeg', false]);
+  if (w) fi.push([L.width, w + ' px', false]);
+  if (h) fi.push([L.height, h + ' px', false]);
+  if (w && h) fi.push([L.megapixels, ((w * h) / 1e6).toFixed(1) + ' MP', false]);
+  if (e.ColorSpace != null) fi.push([L.cs, csName(e.ColorSpace), false]);
+  sections.push({ t: L.metaFile, icon:'📄', rows:fi });
+
+  const au = [];
+  if (e.Artist) au.push([L.artist, esc(String(e.Artist)), false]);
+  if (e.Copyright) au.push([L.copyright, esc(String(e.Copyright)), false]);
+  if (e.ImageDescription) au.push([L.desc, esc(String(e.ImageDescription)), false]);
+  if (au.length) sections.push({ t: L.metaAuthor, icon:'✍️', rows:au });
+
+  const alreadyRendered = !!document.getElementById('exif-output').querySelector('.meta-grid');
+  out.innerHTML = `<div class="meta-grid${alreadyRendered ? '' : ' fade-in'}">${sections.map(sec => `
+    <div class="meta-section">
+      <div class="meta-section-title">${sec.icon} ${sec.t}</div>
+      ${sec.rows.map(([k,v,hi]) => `
+        <div class="meta-row">
+          <span class="meta-key">${k}</span>
+          <span class="meta-val${hi?' hi':''}">${v}</span>
+        </div>`).join('')}
+    </div>`).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// JPEG APP BLOCK STRIPPER — removes XMP, IPTC, ICC etc.
+// ══════════════════════════════════════════════════════
+function stripJpegAppBlocks(buf, removeAll) {
+  const data = new Uint8Array(buf);
+  if (data[0] !== 0xFF || data[1] !== 0xD8) return buf;
+
+  // First pass — calculate output size to allocate once
+  let outSize = 2; // FFD8
+  let i = 2;
+  while (i < data.length) {
+    if (data[i] !== 0xFF) { outSize += data.length - i; break; }
+    const marker = data[i + 1];
+    if (marker === 0xD8 || marker === 0xD9) { outSize += 2; i += 2; continue; }
+    if (marker === 0xDA) { outSize += data.length - i; break; }
+    const segLen = (data[i+2] << 8) | data[i+3];
+    const segEnd = i + 2 + segLen;
+    if (!shouldSkip(data, i, marker, segLen, removeAll)) outSize += segEnd - i;
+    i = segEnd;
+  }
+
+  // Second pass — copy segments into pre-allocated buffer
+  const out = new Uint8Array(outSize);
+  let pos = 0;
+  out[pos++] = 0xFF; out[pos++] = 0xD8;
+  i = 2;
+  while (i < data.length) {
+    if (data[i] !== 0xFF) { out.set(data.subarray(i), pos); break; }
+    const marker = data[i + 1];
+    if (marker === 0xD8 || marker === 0xD9) { out[pos++] = data[i]; out[pos++] = data[i+1]; i += 2; continue; }
+    if (marker === 0xDA) { out.set(data.subarray(i), pos); break; }
+    const segLen = (data[i+2] << 8) | data[i+3];
+    const segEnd = i + 2 + segLen;
+    if (!shouldSkip(data, i, marker, segLen, removeAll)) {
+      out.set(data.subarray(i, segEnd), pos);
+      pos += segEnd - i;
+    }
+    i = segEnd;
+  }
+
+  return out.buffer;
+}
+
+function shouldSkip(data, i, marker, segLen, removeAll) {
+  // JPEG segment layout: [FF marker][len_hi len_lo][data...]
+  // i     = FF
+  // i+1   = marker byte
+  // i+2   = length high byte  }
+  // i+3   = length low byte   } segLen includes these 2 bytes but NOT the FF+marker
+  // i+4   = first byte of segment data (e.g. "Exif\0" or XMP namespace)
+  // segLen > 6 check ensures there's enough data to read a signature
+  const isApp1  = marker === 0xE1; // EXIF or XMP
+  const isApp13 = marker === 0xED; // IPTC / Photoshop
+  const isApp2  = marker === 0xE2; // ICC profile
+  const isAppN  = marker >= 0xE0 && marker <= 0xEF && marker !== 0xE0; // APP1-APP15, keep APP0 (JFIF)
+  if (removeAll) return isAppN;
+  if (isApp1 && segLen > 6) {
+    const sig = String.fromCharCode.apply(null, data.subarray(i+4, i+4+29));
+    if (sig.startsWith('http://ns.adobe.com') || sig.startsWith('XMP\0')) return true;
+  }
+  return isApp13 || isApp2;
+}
+
+// ══════════════════════════════════════════════════════
+// VERIFY REPORT
+// ══════════════════════════════════════════════════════
+function buildVerifyReport(before, after, cats) {
+  const L = s();
+  const cleanAll = cats.includes('all');
+
+  // Categories to check
+  const checks = [
+    {
+      icon: '📍', label: L.verifyLoc || 'GPS Location',
+      wasPresent: before.latitude != null || before.longitude != null,
+      nowPresent: after.latitude != null || after.longitude != null,
+      cleaned: cleanAll || cats.includes('loc')
+    },
+    {
+      icon: '📷', label: L.verifyDevice || 'Device info',
+      wasPresent: !!(before.Make || before.Model || before.LensModel),
+      nowPresent: !!(after.Make || after.Model || after.LensModel),
+      cleaned: cleanAll || cats.includes('device')
+    },
+    {
+      icon: '🕐', label: L.verifyTime || 'Timestamps',
+      wasPresent: !!(before.DateTimeOriginal || before.DateTime),
+      nowPresent: !!(after.DateTimeOriginal || after.DateTime),
+      cleaned: cleanAll || cats.includes('time')
+    },
+    {
+      icon: '🛠', label: L.verifySoftware || 'Software',
+      wasPresent: !!before.Software,
+      nowPresent: !!after.Software,
+      cleaned: cleanAll || cats.includes('software')
+    },
+    {
+      icon: '✍️', label: L.verifyAuthor || 'Author / Copyright',
+      wasPresent: !!(before.Artist || before.Copyright || before.ImageDescription),
+      nowPresent: !!(after.Artist || after.Copyright || after.ImageDescription),
+      cleaned: cleanAll || cats.includes('author')
+    },
+  ];
+
+  const rows = checks.map(c => {
+    let statusClass, statusText;
+    if (!c.wasPresent) {
+      statusClass = 'verify-empty';
+      statusText = L.verifyWasEmpty || 'was empty';
+    } else if (c.cleaned && !c.nowPresent) {
+      statusClass = 'verify-removed';
+      statusText = L.verifyRemoved || 'REMOVED';
+    } else if (c.nowPresent) {
+      statusClass = 'verify-present';
+      statusText = L.verifyPresent || 'PRESENT';
+    } else {
+      statusClass = 'verify-removed';
+      statusText = L.verifyRemoved || 'REMOVED';
+    }
+    return `
+      <div class="verify-row">
+        <span class="verify-icon">${c.icon}</span>
+        <span class="verify-label">${c.label}</span>
+        <span class="verify-status ${statusClass}">${statusText}</span>
+      </div>`;
+  });
+
+  // Add note about ICC if present
+  const hasIcc = after.ColorSpace != null;
+  if (hasIcc) {
+    rows.push(`
+      <div class="verify-row">
+        <span class="verify-icon">🎨</span>
+        <span class="verify-label" style="color:var(--muted)">${L.verifyIcc || 'Color profile (ICC)'}</span>
+        <span class="verify-status verify-present">${L.verifyIccNote || 'not sensitive'}</span>
+      </div>`);
+  }
+
+  document.getElementById('verify-report').innerHTML = rows.join('');
+}
+function toggleChip(label) {
+  const input = label.querySelector('input');
+  const isAll = input.value === 'all';
+  const container = label.parentElement;
+  if (isAll) {
+    const nc = !label.classList.contains('checked');
+    container.querySelectorAll('.chip').forEach(c => { c.classList.toggle('checked', nc); c.querySelector('input').checked = nc; });
+  } else {
+    label.classList.toggle('checked');
+    input.checked = label.classList.contains('checked');
+    const nonAll = [...container.querySelectorAll('.chip')].filter(c => c.querySelector('input').value !== 'all');
+    const allC = nonAll.every(c => c.classList.contains('checked'));
+    const allChip = container.querySelector('.chip:first-child');
+    if (allChip) { allChip.classList.toggle('checked', allC); allChip.querySelector('input').checked = allC; }
+  }
+}
+
+function getChips() { return [...document.querySelectorAll('#exif-chips .chip.checked')].map(c => c.querySelector('input').value); }
+
+async function cleanExif() {
+  const btn = document.getElementById('exif-clean-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+  try {
+    const cats = getChips();
+    const cleanAll = cats.includes('all');
+    const exifBefore = { ...appState.exif }; // snapshot before clean
+    const src = appState.outputs.editor || appState.file;
+    const mimeType = appState.file.type || 'image/jpeg';
+    const isJpeg = /\.jpe?g$/i.test(appState.file.name) || mimeType === 'image/jpeg';
+    let buf = await src.arrayBuffer();
+
+    if (isJpeg) {
+      // Step 1: piexif — clean EXIF IFD blocks
+      const bin = buf2str(buf);
+      let obj; try { obj = piexif.load(bin); } catch { obj = {}; }
+      if (!obj['0th']) obj['0th'] = {}; if (!obj['Exif']) obj['Exif'] = {}; if (!obj['GPS']) obj['GPS'] = {};
+
+      if (cleanAll) {
+        obj = {'0th':{},'Exif':{},'GPS':{},'Interop':{},'1st':{}};
+      } else {
+        const has = c => cats.includes(c);
+        if (has('loc'))      { obj['GPS'] = {}; }
+        if (has('device'))   { [piexif.ImageIFD.Make, piexif.ImageIFD.Model, piexif.ImageIFD.XResolution, piexif.ImageIFD.YResolution].forEach(k => delete obj['0th'][k]); if(obj['Exif']){[piexif.ExifIFD.LensModel,piexif.ExifIFD.ISOSpeedRatings,piexif.ExifIFD.ExposureTime,piexif.ExifIFD.FNumber,piexif.ExifIFD.FocalLength,piexif.ExifIFD.Flash].forEach(k=>delete obj['Exif'][k]);} }
+        if (has('time'))     { delete obj['0th'][piexif.ImageIFD.DateTime]; if(obj['Exif']){[piexif.ExifIFD.DateTimeOriginal,piexif.ExifIFD.DateTimeDigitized,piexif.ExifIFD.OffsetTime].forEach(k=>delete obj['Exif'][k]);} }
+        if (has('software')) { delete obj['0th'][piexif.ImageIFD.Software]; }
+        if (has('author'))   { [piexif.ImageIFD.Artist,piexif.ImageIFD.Copyright,piexif.ImageIFD.ImageDescription].forEach(k=>delete obj['0th'][k]); }
+      }
+
+      const cleaned = piexif.insert(piexif.dump(obj), bin);
+      buf = str2buf(cleaned).buffer;
+
+      // Step 2: strip XMP / IPTC / ICC app blocks from raw JPEG binary
+      buf = stripJpegAppBlocks(buf, cleanAll);
+
+      appState.outputs.exif = new Blob([buf], { type: 'image/jpeg' });
+    } else {
+      // PNG/WEBP — canvas stripping removes ALL metadata natively
+      appState.outputs.exif = await stripViaCanvas(
+        new Blob([buf], { type: mimeType }), mimeType
+      );
+    }
+
+    // Step 3: re-parse cleaned file to show REAL remaining metadata
+    try {
+      const reparsed = await exifr.parse(appState.outputs.exif, {
+        tiff:true, xmp:true, icc:true, iptc:true,
+        gps:true, exif:true, makerNote:false,
+        translateValues:false, reviveValues:true, mergeOutput:true
+      });
+      appState.exif = reparsed || {};
+    } catch { appState.exif = {}; }
+
+    document.getElementById('exif-dl-btn').disabled = false;
+    document.getElementById('exif-clean-result').style.display = 'block';
+    buildVerifyReport(exifBefore, appState.exif, cats);
+    updateStripStatus();
+    renderExifOutput();
+    showToast(s().toastCleaned);
+  } catch(e) { console.error('cleanExif error:', e); showToast('⚠ Error: ' + e.message); }
+  btn.disabled = false;
+  btn.innerHTML = '🧹 <span>' + s().cleanBtnLbl + '</span>';
+}
+
+// ══════════════════════════════════════════════════════
+// EDITOR
+// ══════════════════════════════════════════════════════
+function populateEditorFields() {
+  const e = appState.exif;
+  document.getElementById('ed-artist').value = e.Artist || '';
+  document.getElementById('ed-copyright').value = e.Copyright || '';
+  document.getElementById('ed-desc').value = e.ImageDescription || '';
+  document.getElementById('ed-software').value = e.Software || '';
+  document.getElementById('ed-lat').value = e.latitude != null ? e.latitude.toFixed(6) : '';
+  document.getElementById('ed-lng').value = e.longitude != null ? e.longitude.toFixed(6) : '';
+}
+
+function updateRenamePreview() {
+  const el = document.getElementById('renamePreview');
+  const d = appState.exif?.DateTimeOriginal || appState.exif?.DateTime;
+  if (!d) { el.textContent = s().renameNone; return; }
+  try {
+    const dt = d instanceof Date ? d : new Date(d);
+    if (isNaN(dt)) { el.textContent = s().renameNone; return; }
+    const p = n => String(n).padStart(2,'0');
+    const ext = appState.file.name.split('.').pop();
+    el.textContent = `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())}_${p(dt.getHours())}-${p(dt.getMinutes())}.${ext}`;
+  } catch { el.textContent = s().renameNone; }
+}
+
+async function saveEdits() {
+  const artist = document.getElementById('ed-artist').value;
+  const copyright = document.getElementById('ed-copyright').value;
+  const desc = document.getElementById('ed-desc').value;
+  const software = document.getElementById('ed-software').value;
+  const lat = parseFloat(document.getElementById('ed-lat').value);
+  const lng = parseFloat(document.getElementById('ed-lng').value);
+
+  // Update in-memory exif — empty string = delete the field
+  if (artist)    appState.exif.Artist = artist;
+  else           delete appState.exif.Artist;
+  if (copyright) appState.exif.Copyright = copyright;
+  else           delete appState.exif.Copyright;
+  if (desc)      appState.exif.ImageDescription = desc;
+  else           delete appState.exif.ImageDescription;
+  if (software)  appState.exif.Software = software;
+  else           delete appState.exif.Software;
+  if (!isNaN(lat)) appState.exif.latitude = lat;
+  else             delete appState.exif.latitude;
+  if (!isNaN(lng)) appState.exif.longitude = lng;
+  else             delete appState.exif.longitude;
+
+  const isJpeg = /\.jpe?g$/i.test(appState.file.name) || appState.file.type === 'image/jpeg';
+  if (isJpeg) {
+    const src = appState.outputs.exif || appState.file;
+    const buf = await src.arrayBuffer();
+    const bin = buf2str(buf);
+    let obj; try { obj = piexif.load(bin); } catch { obj = {}; }
+    if (!obj['0th']) obj['0th'] = {}; if (!obj['Exif']) obj['Exif'] = {}; if (!obj['GPS']) obj['GPS'] = {};
+    if (artist)    obj['0th'][piexif.ImageIFD.Artist] = artist;
+    else           delete obj['0th'][piexif.ImageIFD.Artist];
+    if (copyright) obj['0th'][piexif.ImageIFD.Copyright] = copyright;
+    else           delete obj['0th'][piexif.ImageIFD.Copyright];
+    if (desc)      obj['0th'][piexif.ImageIFD.ImageDescription] = desc;
+    else           delete obj['0th'][piexif.ImageIFD.ImageDescription];
+    if (software)  obj['0th'][piexif.ImageIFD.Software] = software;
+    else           delete obj['0th'][piexif.ImageIFD.Software];
+    if (!isNaN(lat) && !isNaN(lng)) {
+      const toR = v => { const a=Math.abs(v),deg=Math.floor(a),min=Math.floor((a-deg)*60),sec=Math.round(((a-deg)*60-min)*6000); return [[deg,1],[min,1],[sec,100]]; };
+      obj['GPS'][piexif.GPSIFD.GPSLatitudeRef] = lat>=0?'N':'S';
+      obj['GPS'][piexif.GPSIFD.GPSLatitude] = toR(lat);
+      obj['GPS'][piexif.GPSIFD.GPSLongitudeRef] = lng>=0?'E':'W';
+      obj['GPS'][piexif.GPSIFD.GPSLongitude] = toR(lng);
+    }
+    appState.outputs.editor = new Blob([str2buf(piexif.insert(piexif.dump(obj), bin))], { type:'image/jpeg' });
+  }
+  document.getElementById('editor-dl-btn').disabled = false;
+  renderExifOutput();
+  updateRenamePreview();
+  showToast(s().toastSaved);
+}
+
+// ══════════════════════════════════════════════════════
+// CROP
+// ══════════════════════════════════════════════════════
+let cropDrag = { active:false, sx:0, sy:0 };
+let cropSel = null;
+
+let _cropEventsBound = false;
+function initCrop() {
+  drawCropCanvas();
+  if (!_cropEventsBound) { bindCropEvents(); _cropEventsBound = true; }
+}
+
+function drawCropCanvas() {
+  const img = appState.img; if (!img) return;
+  const canvas = document.getElementById('crop-canvas');
+  const maxW = Math.min(820, (document.querySelector('.main-content')?.clientWidth || 820) - 40);
+  const scale = Math.min(1, maxW / img.naturalWidth);
+  canvas._scale = scale;
+  canvas.width = img.naturalWidth * scale;
+  canvas.height = img.naturalHeight * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  if (cropSel) drawSelection(ctx, canvas._scale);
+}
+
+function drawSelection(ctx, scale) {
+  const {x,y,w,h} = cropSel;
+  const cx=x*scale, cy=y*scale, cw=w*scale, ch=h*scale;
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.fillRect(0,0,ctx.canvas.width,cy);
+  ctx.fillRect(0,cy+ch,ctx.canvas.width,ctx.canvas.height-(cy+ch));
+  ctx.fillRect(0,cy,cx,ch);
+  ctx.fillRect(cx+cw,cy,ctx.canvas.width-(cx+cw),ch);
+  ctx.strokeStyle='#E8A020'; ctx.lineWidth=2; ctx.strokeRect(cx,cy,cw,ch);
+  ctx.strokeStyle='rgba(232,160,32,.35)'; ctx.lineWidth=1;
+  for(let i=1;i<3;i++){ctx.beginPath();ctx.moveTo(cx+cw*i/3,cy);ctx.lineTo(cx+cw*i/3,cy+ch);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,cy+ch*i/3);ctx.lineTo(cx+cw,cy+ch*i/3);ctx.stroke();}
+  document.getElementById('crop-info').textContent = `${Math.round(w)} × ${Math.round(h)} px`;
+}
+
+function bindCropEvents() {
+  const c = document.getElementById('crop-canvas');
+  const xy = (e) => {
+    const r = c.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {x:(clientX-r.left)*(c.width/r.width), y:(clientY-r.top)*(c.height/r.height)};
+  };
+  const start = (e) => { const p=xy(e); cropDrag={active:true,sx:p.x,sy:p.y}; cropSel=null; };
+  const move = (e) => {
+    if (!cropDrag.active) return;
+    e.preventDefault();
+    const img=appState.img; const sc=c._scale||1; const p=xy(e);
+    let w=(p.x-cropDrag.sx)/sc, h=(p.y-cropDrag.sy)/sc;
+    if (appState.cropRatio) { const sign=h<0?-1:1; h=sign*Math.abs(w/appState.cropRatio[0]*appState.cropRatio[1]); }
+    cropSel={x:cropDrag.sx/sc, y:cropDrag.sy/sc, w, h};
+    if(cropSel.w<0){cropSel.x+=cropSel.w;cropSel.w=-cropSel.w;}
+    if(cropSel.h<0){cropSel.y+=cropSel.h;cropSel.h=-cropSel.h;}
+    cropSel.x=Math.max(0,cropSel.x); cropSel.y=Math.max(0,cropSel.y);
+    cropSel.w=Math.min(cropSel.w,img.naturalWidth-cropSel.x);
+    cropSel.h=Math.min(cropSel.h,img.naturalHeight-cropSel.y);
+    const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,c.width,c.height); drawSelection(ctx,sc);
+  };
+  const end = () => { cropDrag.active=false; };
+  c.onmousedown=start; c.onmousemove=move; c.onmouseup=end; c.onmouseleave=end;
+  c.ontouchstart=e=>{e.preventDefault();start(e);};
+  c.ontouchmove=e=>{move(e);};
+  c.ontouchend=e=>{end(e.changedTouches[0]);};
+}
+
+function setCropPreset(p, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  appState.cropRatio = p==='free' ? null : p.split(':').map(Number);
+}
+
+function resetCrop() {
+  cropSel = null; appState.outputs.crop = null;
+  document.getElementById('crop-dl-btn').disabled = true;
+  document.getElementById('crop-info').textContent = '';
+  document.getElementById('crop-result-wrap').style.display = 'none';
+  drawCropCanvas();
+}
+
+async function applyCrop() {
+  if (!cropSel || cropSel.w < 2 || cropSel.h < 2) return;
+  const {x,y,w,h} = cropSel;
+  const img = appState.img;
+  const c = document.createElement('canvas'); c.width=Math.round(w); c.height=Math.round(h);
+  c.getContext('2d').drawImage(img,x,y,w,h,0,0,w,h);
+  appState.outputs.crop = await new Promise(res =>
+    c.toBlob(res, appState.file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.95)
+  );
+  appState.img = await loadImg(createURL('source', appState.outputs.crop));
+
+  // Show result preview
+  const previewUrl = createURL('crop-preview', appState.outputs.crop);
+  document.getElementById('crop-result-img').src = previewUrl;
+  document.getElementById('crop-result-info').textContent =
+    `${Math.round(w)} × ${Math.round(h)} px · ${formatSize(appState.outputs.crop.size)}`;
+  document.getElementById('crop-result-wrap').style.display = 'block';
+
+  document.getElementById('crop-dl-btn').disabled = false;
+  cropSel = null; drawCropCanvas();
+  showToast(s().toastCropped);
+}
+
+// ══════════════════════════════════════════════════════
+// WATERMARK — drag to position
+// ══════════════════════════════════════════════════════
+let wmDrag = { active:false, startX:0, startY:0 };
+// wmPos stored as {x, y} in 0..1 fractions of canvas size
+let wmPosXY = { x: 0.5, y: 0.92 };
+
+let _wmTimer = null;
+function renderWatermark() {
+  clearTimeout(_wmTimer);
+  _wmTimer = setTimeout(_doRenderWatermark, 80);
+}
+function _doRenderWatermark() {
+  const img = appState.img; if (!img) return;
+  const canvas = document.getElementById('wm-canvas');
+  const maxW = Math.min(820, (document.querySelector('.main-content')?.clientWidth || 820) - 40);
+  const scale = Math.min(1, maxW / img.naturalWidth);
+  canvas.width = img.naturalWidth * scale;
+  canvas.height = img.naturalHeight * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  const text = document.getElementById('wm-text').value || '© PrivacyKit';
+  const color = document.getElementById('wm-color').value;
+  // Use wmTransform.sizePx if set by gesture, else slider value
+  const sliderSize = parseInt(document.getElementById('wm-size').value);
+  const size = wmTransform.sizePx * scale;
+  const opacity = parseInt(document.getElementById('wm-opacity').value) / 100;
+  const tile = document.getElementById('wm-tile').checked;
+  const rotateDeg = wmTransform.rotateDeg;
+
+  ctx.font = `bold ${size}px DM Sans, sans-serif`;
+  ctx.fillStyle = color;
+  ctx.globalAlpha = opacity;
+
+  if (tile) {
+    const tw = ctx.measureText(text).width + size * 2;
+    const th = size * 2.5;
+    const offX = (wmTransform.x * canvas.width) % tw;
+    const offY = (wmTransform.y * canvas.height) % th;
+    // Apply rotation for tile mode
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rotateDeg * Math.PI / 180);
+    ctx.translate(-canvas.width / 2, -canvas.height / 2);
+    for (let ty = offY - th; ty < canvas.height + th; ty += th)
+      for (let tx = offX - tw; tx < canvas.width + tw; tx += tw)
+        ctx.fillText(text, tx, ty);
+    ctx.restore();
+  } else {
+    const tw = ctx.measureText(text).width;
+    const cx = wmTransform.x * canvas.width;
+    const cy = wmTransform.y * canvas.height;
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rotateDeg * Math.PI / 180);
+    ctx.fillText(text, -tw / 2, 0);
+    ctx.restore();
+  }
+  ctx.globalAlpha = 1;
+  // Update transform info display
+  const infoEl = document.getElementById('wm-transform-info');
+  if (infoEl) {
+    const deg = Math.round(wmTransform.rotateDeg);
+    infoEl.textContent = `${Math.round(wmTransform.sizePx)}px · ${deg !== 0 ? deg + '°' : 'no rotation'}`;
+  }
+  const wmMime = appState.file?.type === 'image/png' ? 'image/png' : 'image/jpeg';
+  canvas.toBlob(b => { appState.outputs.watermark = b; }, wmMime, wmMime === 'image/png' ? undefined : 0.95);
+}
+
+let _wmDragBound = false;
+// Watermark transform state
+let wmTransform = { x: 0.5, y: 0.92, sizePx: 32, rotateDeg: 0 };
+
+function initWmDrag() {
+  if (_wmDragBound) return;
+  _wmDragBound = true;
+  const canvas = document.getElementById('wm-canvas');
+
+  // ── Helpers ──
+  const getCanvasXY = (touch, c) => {
+    const r = c.getBoundingClientRect();
+    return {
+      x: (touch.clientX - r.left) / r.width,
+      y: (touch.clientY - r.top) / r.height
+    };
+  };
+  const dist = (t1, t2) => Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+  const angle = (t1, t2) => Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * 180 / Math.PI;
+  const midpoint = (t1, t2, c) => {
+    const r = c.getBoundingClientRect();
+    return {
+      x: ((t1.clientX + t2.clientX) / 2 - r.left) / r.width,
+      y: ((t1.clientY + t2.clientY) / 2 - r.top) / r.height
+    };
+  };
+
+  // ── Touch state ──
+  let touch1 = null, prevDist = null, prevAngle = null;
+
+  // ── Mouse (1 finger equivalent) ──
+  canvas.onmousedown = () => { wmDrag.active = true; };
+  canvas.onmousemove = (e) => {
+    if (!wmDrag.active) return;
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect();
+    wmTransform.x = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    wmTransform.y = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+    syncWmControls();
+    renderWatermark();
+  };
+  canvas.onmouseup = canvas.onmouseleave = () => { wmDrag.active = false; };
+
+  // ── Touch ──
+  canvas.ontouchstart = (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      wmDrag.active = true;
+      touch1 = e.touches[0];
+      prevDist = null; prevAngle = null;
+    } else if (e.touches.length === 2) {
+      wmDrag.active = false;
+      prevDist = dist(e.touches[0], e.touches[1]);
+      prevAngle = angle(e.touches[0], e.touches[1]);
+    }
+  };
+
+  canvas.ontouchmove = (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && wmDrag.active) {
+      // 1 finger — move position
+      const p = getCanvasXY(e.touches[0], canvas);
+      wmTransform.x = Math.max(0, Math.min(1, p.x));
+      wmTransform.y = Math.max(0, Math.min(1, p.y));
+      syncWmControls();
+      renderWatermark();
+    } else if (e.touches.length === 2) {
+      // 2 fingers — pinch = scale, rotation = rotate
+      const curDist  = dist(e.touches[0], e.touches[1]);
+      const curAngle = angle(e.touches[0], e.touches[1]);
+      const mid = midpoint(e.touches[0], e.touches[1], canvas);
+
+      if (prevDist !== null) {
+        // Scale
+        const scaleFactor = curDist / prevDist;
+        wmTransform.sizePx = Math.max(8, Math.min(200, wmTransform.sizePx * scaleFactor));
+        // Rotate
+        const deltaAngle = curAngle - prevAngle;
+        wmTransform.rotateDeg = (wmTransform.rotateDeg + deltaAngle) % 360;
+        // Move midpoint
+        wmTransform.x = Math.max(0, Math.min(1, mid.x));
+        wmTransform.y = Math.max(0, Math.min(1, mid.y));
+        syncWmControls();
+        renderWatermark();
+      }
+      prevDist = curDist;
+      prevAngle = curAngle;
+    }
+  };
+
+  canvas.ontouchend = (e) => {
+    if (e.touches.length === 0) {
+      wmDrag.active = false;
+      prevDist = null; prevAngle = null;
+    } else if (e.touches.length === 1) {
+      // Went from 2 fingers to 1 — resume drag
+      prevDist = null; prevAngle = null;
+      wmDrag.active = true;
+    }
+  };
+}
+
+// Sync wmTransform back to UI controls
+function syncWmControls() {
+  const sizeSlider = document.getElementById('wm-size');
+  const sizeVal = document.getElementById('wm-size-val');
+  const rounded = Math.round(wmTransform.sizePx);
+  if (sizeSlider) { sizeSlider.value = Math.min(160, Math.max(10, rounded)); }
+  if (sizeVal) sizeVal.textContent = rounded;
+}
+
+// ══════════════════════════════════════════════════════
+// RESET PANEL
+// ══════════════════════════════════════════════════════
+const resetHandlers = {
+  exif() {
+    appState.outputs.exif = null;
+    document.getElementById('exif-clean-result').style.display = 'none';
+    document.getElementById('exif-dl-btn').disabled = true;
+    loadFile(appState.file);
+  },
+  editor() {
+    appState.outputs.editor = null;
+    populateEditorFields();
+    document.getElementById('editor-dl-btn').disabled = true;
+    showToast('↺ Reset');
+  },
+  crop() {
+    appState.outputs.crop = null;
+    appState.img = null; // clear immediately so drawCropCanvas won't draw stale image
+    resetCrop();
+    loadSourceImage(appState.file).then(() => drawCropCanvas());
+    showToast('↺ Reset');
+  },
+  watermark() {
+    appState.outputs.watermark = null;
+    document.getElementById('wm-text').value = '';
+    document.getElementById('wm-color').value = '#ffffff';
+    document.getElementById('wm-size').value = 32;
+    document.getElementById('wm-size-val').textContent = '32';
+    document.getElementById('wm-opacity').value = 70;
+    document.getElementById('wm-opacity-val').textContent = '70';
+    document.getElementById('wm-tile').checked = false;
+    wmTransform = { x: 0.5, y: 0.92, sizePx: 32, rotateDeg: 0 };
+    wmPosXY = { x: 0.5, y: 0.92 };
+    renderWatermark();
+    showToast('↺ Reset');
+  },
+  rotate() {
+    appState.outputs.rotate = null;
+    loadSourceImage(appState.file).then(() => initRotate());
+    document.getElementById('rotate-dl-btn').disabled = true;
+    showToast('↺ Reset');
+  },
+  resize() {
+    appState.outputs.resize = null;
+    document.getElementById('resize-dl-btn').disabled = true;
+    document.querySelectorAll('#panel-resize .preset-btn').forEach(b => b.classList.remove('active'));
+    initResize();
+    showToast('↺ Reset');
+  },
+  compress() {
+    appState.outputs.compress = null;
+    document.getElementById('compress-quality').value = 82;
+    document.getElementById('compress-quality-val').textContent = '82%';
+    document.getElementById('compress-dl-btn').disabled = true;
+    updateCompress();
+    showToast('↺ Reset');
+  }
+};
+
+function resetPanel(tool) {
+  if (resetHandlers[tool]) resetHandlers[tool]();
+}
+
+// ══════════════════════════════════════════════════════
+// COMPRESS
+// ══════════════════════════════════════════════════════
+function initCompress() {
+  const img = appState.img; if (!img) return;
+  document.getElementById('compress-before').textContent = formatSize(appState.file.size);
+  document.getElementById('compress-before-res').textContent = img.naturalWidth + ' × ' + img.naturalHeight + ' px';
+  document.getElementById('compress-img-before').src = createURL('thumb', appState.file);
+  // Only recalculate if no result yet
+  if (!appState.outputs.compress) updateCompress();
+}
+
+let _compressTimer = null;
+function updateCompress() {
+  const img = appState.img; if (!img) return;
+  // Debounce — don't hammer canvas on every slider tick
+  clearTimeout(_compressTimer);
+  _compressTimer = setTimeout(() => {
+    const q = parseInt(document.getElementById('compress-quality').value) / 100;
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d').drawImage(img, 0, 0);
+    const mimeOut = appState.file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+    c.toBlob(blob => {
+      appState.outputs.compress = blob;
+      document.getElementById('compress-after').textContent = formatSize(blob.size);
+      const pct = Math.round((1 - blob.size / appState.file.size) * 100);
+      const savingEl = document.getElementById('compress-saving');
+      if (mimeOut === 'image/png') {
+        savingEl.textContent = 'PNG — lossless, canvas re-encode';
+      } else {
+        savingEl.textContent = pct > 0 ? `−${pct}% smaller` : `+${Math.abs(pct)}% larger`;
+      }
+      document.getElementById('compress-dl-btn').disabled = false;
+      const previewUrl = createURL('compress-preview', blob);
+      document.getElementById('compress-img-after').src = previewUrl;
+    }, mimeOut, mimeOut === 'image/png' ? undefined : q);
+  }, 120);
+}
+
+// ══════════════════════════════════════════════════════
+// DOWNLOAD
+// ══════════════════════════════════════════════════════
+function downloadResult(tool) {
+  const blob = appState.outputs[tool]; if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const origExt = appState.file.name.split('.').pop().toLowerCase();
+  // HEIC/HEIF gets re-encoded as JPEG by canvas — use jpg extension
+  const isHeic = origExt === 'heic' || origExt === 'heif';
+  const blobExt = blob.type === 'image/png' ? 'png'
+    : blob.type === 'image/webp' ? 'webp'
+    : isHeic ? 'jpg'
+    : origExt;
+  const base = appState.file.name.replace(/\.[^.]+$/, '');
+  const rp = document.getElementById('renamePreview')?.textContent;
+  const useDateName = rp && rp !== s().renameNone && (tool === 'exif' || tool === 'editor');
+  a.download = useDateName ? rp : `${base}_${tool}.${blobExt}`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+// ══════════════════════════════════════════════════════
+// ROTATE & FLIP
+// ══════════════════════════════════════════════════════
+let rotateState = { deg: 0, flipH: false, flipV: false };
+
+function initRotate() {
+  // Only reset state if no rotation applied yet or coming from a fresh file load
+  if (!appState.outputs.rotate) {
+    rotateState = { deg: 0, flipH: false, flipV: false };
+  }
+  drawRotatePreview();
+}
+
+function drawRotatePreview() {
+  const img = appState.img; if (!img) return;
+  const deg = rotateState.deg;
+  const swapped = deg === 90 || deg === 270;
+  const srcW = img.naturalWidth, srcH = img.naturalHeight;
+  const dstW = swapped ? srcH : srcW;
+  const dstH = swapped ? srcW : srcH;
+
+  const c = document.createElement('canvas');
+  c.width = dstW; c.height = dstH;
+  const ctx = c.getContext('2d');
+  ctx.save();
+  ctx.translate(dstW / 2, dstH / 2);
+  // Correct order: flip first, then rotate
+  if (rotateState.flipH) ctx.scale(-1, 1);
+  if (rotateState.flipV) ctx.scale(1, -1);
+  ctx.rotate(deg * Math.PI / 180);
+  ctx.drawImage(img, -srcW / 2, -srcH / 2);
+  ctx.restore();
+
+  // Show preview scaled
+  const canvas = document.getElementById('rotate-canvas');
+  const maxW = Math.min(820, (document.querySelector('.main-content')?.clientWidth || 820) - 80);
+  const scale = Math.min(1, maxW / dstW);
+  canvas.width = dstW * scale;
+  canvas.height = dstH * scale;
+  canvas.getContext('2d').drawImage(c, 0, 0, canvas.width, canvas.height);
+
+  // Show current state indicator
+  const parts = [];
+  if (rotateState.deg > 0) parts.push(`↻ ${rotateState.deg}°`);
+  if (rotateState.flipH) parts.push('⇄ H');
+  if (rotateState.flipV) parts.push('⇅ V');
+  document.getElementById('rotate-info').textContent =
+    `${dstW} × ${dstH} px` + (parts.length ? `  ·  ${parts.join('  ')}` : '  ·  no transform');
+
+  const mimeOut = appState.file?.type === 'image/png' ? 'image/png' : 'image/jpeg';
+  c.toBlob(b => {
+    appState.outputs.rotate = b;
+    document.getElementById('rotate-dl-btn').disabled = false;
+  }, mimeOut, mimeOut === 'image/png' ? undefined : 0.95);
+}
+
+function applyRotate(deg) {
+  rotateState.deg = (rotateState.deg + deg) % 360;
+  drawRotatePreview();
+  showToast(s().toastRotated);
+}
+
+function applyFlip(dir) {
+  if (dir === 'h') rotateState.flipH = !rotateState.flipH;
+  else rotateState.flipV = !rotateState.flipV;
+  drawRotatePreview();
+  showToast(s().toastRotated);
+}
+
+// ══════════════════════════════════════════════════════
+// RESIZE
+// ══════════════════════════════════════════════════════
+function initResize() {
+  const img = appState.img; if (!img) return;
+  document.getElementById('resize-w').value = img.naturalWidth;
+  document.getElementById('resize-h').value = img.naturalHeight;
+  updateResizeInfo();
+}
+
+function updateResizeInfo() {
+  const w = parseInt(document.getElementById('resize-w').value) || 0;
+  const h = parseInt(document.getElementById('resize-h').value) || 0;
+  const orig = appState.img;
+  if (!orig) return;
+  const pct = Math.round((w * h) / (orig.naturalWidth * orig.naturalHeight) * 100);
+  document.getElementById('resize-info').textContent =
+    `${w} × ${h} px · ${pct}% of original`;
+}
+
+function syncResizeDim(changed) {
+  if (!document.getElementById('resize-lock').checked) { updateResizeInfo(); return; }
+  const img = appState.img; if (!img) return;
+  const ratio = img.naturalWidth / img.naturalHeight;
+  if (changed === 'w') {
+    const w = parseInt(document.getElementById('resize-w').value) || 1;
+    document.getElementById('resize-h').value = Math.round(w / ratio);
+  } else {
+    const h = parseInt(document.getElementById('resize-h').value) || 1;
+    document.getElementById('resize-w').value = Math.round(h * ratio);
+  }
+  updateResizeInfo();
+}
+
+function applyResizePreset(w, h, btn) {
+  const img = appState.img; if (!img) return;
+  const ratio = img.naturalWidth / img.naturalHeight;
+  if (ratio > w / h) { h = Math.round(w / ratio); }
+  else { w = Math.round(h * ratio); }
+  document.getElementById('resize-w').value = w;
+  document.getElementById('resize-h').value = h;
+  updateResizeInfo();
+  document.querySelectorAll('#panel-resize .preset-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+function applyResizePresetPct(pct, btn) {
+  const img = appState.img; if (!img) return;
+  document.getElementById('resize-w').value = Math.round(img.naturalWidth * pct / 100);
+  document.getElementById('resize-h').value = Math.round(img.naturalHeight * pct / 100);
+  updateResizeInfo();
+  document.querySelectorAll('#panel-resize .preset-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+async function applyResize() {
+  const img = appState.img; if (!img) return;
+  const w = parseInt(document.getElementById('resize-w').value);
+  const h = parseInt(document.getElementById('resize-h').value);
+  if (!w || !h || w < 1 || h < 1) return;
+
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, 0, 0, w, h);
+  appState.outputs.resize = await new Promise(res =>
+    c.toBlob(res, appState.file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.95)
+  );
+  document.getElementById('resize-dl-btn').disabled = false;
+  document.getElementById('resize-info').textContent = `${w} × ${h} px — ${s().toastResized}`;
+  showToast(s().toastResized);
+}
+
+// ══════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════
+function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatSize(b) { if(b<1024)return b+' B'; if(b<1048576)return (b/1024).toFixed(1)+' KB'; return (b/1048576).toFixed(2)+' MB'; }
+function fmtDate(d) { if(!d)return '—'; try{ const dt=d instanceof Date?d:new Date(d); return isNaN(dt)?String(d):dt.toLocaleString(currentLang==='ru'?'ru-RU':'en-US'); }catch{return String(d);} }
+function fmtShutter(v) { return v<1?'1/'+Math.round(1/v)+'s':v+'s'; }
+function csName(v) { return {1:'sRGB',65535:'Uncalibrated',2:'Adobe RGB'}[v]||String(v); }
+function buf2str(buf) {
+  const b = new Uint8Array(buf);
+  let s = '';
+  // Process in chunks of 8192 to avoid Maximum call stack exceeded
+  for (let i = 0; i < b.length; i += 8192) {
+    s += String.fromCharCode.apply(null, b.subarray(i, i + 8192));
+  }
+  return s;
+}
+function str2buf(s) {
+  const a = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) a[i] = s.charCodeAt(i);
+  return a;
+}
+
+// Object URL pool — revoke previous before creating new
+const _urls = {};
+function createURL(key, blob) {
+  if (_urls[key]) URL.revokeObjectURL(_urls[key]);
+  _urls[key] = URL.createObjectURL(blob);
+  return _urls[key];
+}
+function revokeURL(key) {
+  if (_urls[key]) { URL.revokeObjectURL(_urls[key]); delete _urls[key]; }
+}
+
+async function stripViaCanvas(blob, type) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    const u = URL.createObjectURL(blob);
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      URL.revokeObjectURL(u);
+      // PNG — keep lossless, preserve transparency
+      // HEIC/HEIF — browsers decode but can't re-encode, output JPEG
+      // WEBP — re-encode as webp
+      // everything else — JPEG
+      let outMime, quality;
+      if (type === 'image/png') {
+        outMime = 'image/png'; quality = undefined;
+      } else if (type === 'image/webp') {
+        outMime = 'image/webp'; quality = 0.92;
+      } else {
+        // JPEG, HEIC, HEIF, TIFF, unknown → JPEG
+        outMime = 'image/jpeg'; quality = 0.95;
+      }
+      c.toBlob(b => res(b), outMime, quality);
+    };
+    img.onerror = rej;
+    img.src = u;
+  });
+}
+
+let _toastT;
+function showToast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove('show'),2400); }
+</script>
+</body>
+</html>
