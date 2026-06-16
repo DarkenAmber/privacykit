@@ -4,7 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>PrivacyKit — Photo Tools. One File. No Upload.</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌑</text></svg>">
+<meta name="description" content="7 photo privacy tools in one file — EXIF cleaner, metadata editor, crop, rotate, resize, watermark, compress. No upload. Fully offline.">
+<meta name="theme-color" content="#0F0A05">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PrivacyKit">
+
+<!-- Open Graph -->
+<meta property="og:title" content="PrivacyKit — Photo Privacy Tools">
+<meta property="og:description" content="7 photo tools. No upload. No server. Fully offline.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://darkenamber.github.io/privacykit/">
+
+<!-- Icons -->
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔒</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230F0A05'/><text y='.85em' font-size='75' x='12'>🔒</text></svg>">
+
+<!-- PWA Manifest inline -->
+<link rel="manifest" href="data:application/manifest+json,{
+  &quot;name&quot;: &quot;PrivacyKit — Photo Tools&quot;,
+  &quot;short_name&quot;: &quot;PrivacyKit&quot;,
+  &quot;description&quot;: &quot;7 photo privacy tools. No upload. Fully offline.&quot;,
+  &quot;start_url&quot;: &quot;.&quot;,
+  &quot;display&quot;: &quot;standalone&quot;,
+  &quot;background_color&quot;: &quot;%230F0A05&quot;,
+  &quot;theme_color&quot;: &quot;%230F0A05&quot;,
+  &quot;orientation&quot;: &quot;portrait-primary&quot;,
+  &quot;icons&quot;: [
+    { &quot;src&quot;: &quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230F0A05'/><text y='.85em' font-size='400' x='56'>🔒</text></svg>&quot;, &quot;sizes&quot;: &quot;512x512&quot;, &quot;type&quot;: &quot;image/svg+xml&quot;, &quot;purpose&quot;: &quot;any maskable&quot; }
+  ],
+  &quot;categories&quot;: [&quot;photo&quot;, &quot;privacy&quot;, &quot;utilities&quot;]
+}">
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Press+Start+2P&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/piexifjs@1.0.6/piexif.js"></script>
@@ -208,6 +240,45 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .fade-in{animation:fadeIn .25s ease}
 
+/* ── HOW IT WORKS ── */
+.how-it-works{width:100%;max-width:640px;margin:36px auto 0;text-align:center}
+.how-title{font-size:11px;font-family:var(--mono);font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-dim);margin-bottom:20px}
+.how-steps{display:flex;align-items:flex-start;justify-content:center;gap:8px;flex-wrap:wrap}
+.how-step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:120px;max-width:160px}
+.how-step-icon{font-size:28px}
+.how-step-label{font-size:13px;font-weight:600;color:var(--text)}
+.how-step-desc{font-size:11px;color:var(--muted);line-height:1.5;text-align:center}
+.how-arrow{font-size:18px;color:var(--border2);padding-top:14px;flex-shrink:0}
+
+/* ── PRIVACY STATEMENT ── */
+.privacy-statement{width:100%;max-width:560px;margin:32px auto 0;background:var(--surface);border:var(--bw) solid var(--border);border-radius:var(--r-card);padding:20px 24px}
+.privacy-statement-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px}
+.privacy-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.privacy-item{display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);line-height:1.4}
+.privacy-check{color:var(--success);font-weight:700;flex-shrink:0;margin-top:1px}
+
+/* ── TOOLS OVERVIEW ── */
+.tools-overview{width:100%;max-width:640px;margin:32px auto 0;text-align:center}
+.tools-grid-landing{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:16px}
+.tool-tile{display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 10px;background:var(--surface);border:var(--bw) solid var(--border);border-radius:var(--r-card);cursor:pointer;transition:all .15s;text-decoration:none}
+.tool-tile:hover{border-color:var(--accent-dim);background:var(--accent-light);transform:translateY(-1px)}
+.tool-tile>:first-child{font-size:22px}
+.tool-tile span:nth-child(2){font-size:12px;font-weight:600;color:var(--text)}
+.tool-tile span:nth-child(3){font-size:10px;color:var(--muted);text-align:center;line-height:1.3}
+
+/* ── DROP SCREEN overrides for landing ── */
+.drop-screen{text-align:center;padding:40px 24px 60px}
+
+@media(max-width:600px){
+  .privacy-grid{grid-template-columns:1fr}
+  .how-arrow{display:none}
+  .how-steps{gap:16px}
+  .tools-grid-landing{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px}
+  .tool-tile{padding:12px 8px}
+  .privacy-statement{padding:16px}
+  .drop-screen{padding:24px 14px 48px}
+}
+
 /* ── VERIFY REPORT ── */
 .verify-row{display:flex;align-items:center;gap:10px;padding:8px 18px;border-bottom:1px solid var(--border);font-size:12px}
 .verify-row:last-child{border-bottom:none}
@@ -383,6 +454,8 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
   <div id="dropScreen" class="drop-screen">
     <h1 class="drop-hero-title" id="heroTitle">Photo Tools.<br>One File. No Upload.</h1>
     <p class="drop-hero-sub" id="heroSub">EXIF cleaner · metadata editor · crop · rotate · resize · watermark · compress — all offline in your browser.</p>
+
+    <!-- Drop zone -->
     <div class="drop-zone" id="dropZone">
       <input type="file" id="fileInput" accept="image/*">
       <span class="drop-icon-big" id="dropIcon">📷</span>
@@ -393,11 +466,85 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
         <div style="font-size:13px;color:var(--muted)" id="dropLoadingLbl">Loading…</div>
       </div>
     </div>
+
+    <!-- Privacy badges -->
     <div class="drop-badges" style="margin-top:20px">
-      <span class="badge">🔒 100% offline</span>
+      <span class="badge">🔒 No upload</span>
+      <span class="badge">📡 No server</span>
+      <span class="badge">👁 No tracking</span>
       <span class="badge">🆓 Free forever</span>
-      <span class="badge">📁 Single HTML file</span>
+      <span class="badge">📖 Open source</span>
     </div>
+
+    <!-- How it works -->
+    <div class="how-it-works">
+      <div class="how-title" id="howTitle">How it works</div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-step-icon">📂</div>
+          <div class="how-step-label" id="howStep1">Open photo</div>
+          <div class="how-step-desc" id="howStep1Desc">Drop or select any JPEG, PNG, WEBP or HEIC file</div>
+        </div>
+        <div class="how-arrow">→</div>
+        <div class="how-step">
+          <div class="how-step-icon">🔧</div>
+          <div class="how-step-label" id="howStep2">Process</div>
+          <div class="how-step-desc" id="howStep2Desc">Clean metadata, crop, resize, watermark — all in-browser</div>
+        </div>
+        <div class="how-arrow">→</div>
+        <div class="how-step">
+          <div class="how-step-icon">⬇️</div>
+          <div class="how-step-label" id="howStep3">Download</div>
+          <div class="how-step-desc" id="howStep3Desc">Save the result. Original file is never touched</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy statement -->
+    <div class="privacy-statement">
+      <div class="privacy-statement-title" id="privacyTitle">🔐 Privacy guarantee</div>
+      <div class="privacy-grid">
+        <div class="privacy-item">
+          <span class="privacy-check">✓</span>
+          <span id="privacyP1">Your photos are processed locally — never sent anywhere</span>
+        </div>
+        <div class="privacy-item">
+          <span class="privacy-check">✓</span>
+          <span id="privacyP2">No cookies, no analytics, no fingerprinting</span>
+        </div>
+        <div class="privacy-item">
+          <span class="privacy-check">✓</span>
+          <span id="privacyP3">Works fully offline after first load</span>
+        </div>
+        <div class="privacy-item">
+          <span class="privacy-check">✓</span>
+          <span id="privacyP4">Open source — inspect the code yourself</span>
+        </div>
+        <div class="privacy-item">
+          <span class="privacy-check">✓</span>
+          <span id="privacyP5">Original file on your disk is never modified</span>
+        </div>
+        <div class="privacy-item">
+          <span class="privacy-check">✓</span>
+          <span id="privacyP6">EXIF cleaning verified — re-parsed after every clean</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools grid -->
+    <div class="tools-overview">
+      <div class="how-title" id="toolsTitle">7 Tools included</div>
+      <div class="tools-grid-landing">
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>🔍</span><span id="tool1Name">EXIF Cleaner</span><span id="tool1Desc">Remove hidden metadata</span></div>
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>✏️</span><span id="tool2Name">Editor</span><span id="tool2Desc">Edit metadata fields</span></div>
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>✂️</span><span id="tool3Name">Crop</span><span id="tool3Desc">Cut to any ratio</span></div>
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>🔄</span><span id="tool4Name">Rotate</span><span id="tool4Desc">Rotate &amp; flip</span></div>
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>📐</span><span id="tool5Name">Resize</span><span id="tool5Desc">Change dimensions</span></div>
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>🌊</span><span id="tool6Name">Watermark</span><span id="tool6Desc">Add text overlay</span></div>
+        <div class="tool-tile" onclick="document.getElementById('fileInput').click()"><span>🗜️</span><span id="tool7Name">Compress</span><span id="tool7Desc">Reduce file size</span></div>
+      </div>
+    </div>
+
   </div>
 
   <input type="file" id="replaceInput" accept="image/*" style="display:none" onchange="handleReplace(this)">
@@ -690,6 +837,7 @@ input[type=color]{width:100%;height:38px;padding:3px;cursor:pointer;border-radiu
   <span>© 2025 DarkenAmber · MIT</span>
   <a href="https://github.com/darkenamber/privacykit" target="_blank" style="color:var(--muted);text-decoration:none">⭐ GitHub</a>
   <a href="https://darkenamber.com/tools" target="_blank" style="color:var(--muted);text-decoration:none">🛠 darkenamber.com</a>
+  <button id="pwa-install-btn" onclick="window._installPWA()" style="display:none;align-items:center;gap:6px;padding:6px 14px;border:var(--bw) solid var(--accent-dim);border-radius:var(--r-btn);background:var(--accent-light);color:var(--accent);font-size:12px;font-family:var(--ui);cursor:pointer">📲 <span id="pwaInstallLbl">Install app</span></button>
   <a href="https://ko-fi.com/darkenamber" target="_blank" style="color:var(--accent);text-decoration:none">☕ <span id="footerSupport">Support the project</span></a>
 </div>
 
@@ -724,6 +872,24 @@ const STRINGS = {
     sHas:'has EXIF',sClean:'✓ cleaned',sNone:'no EXIF',
     toastCleaned:'✓ EXIF cleaned',toastSaved:'✓ Saved',toastCropped:'✓ Cropped',
     renameNone:'no date', dropLoadingLbl:'Loading…',
+    howTitle:'How it works', toolsTitle:'7 Tools included',
+    howStep1:'Open photo', howStep1Desc:'Drop or select any JPEG, PNG, WEBP or HEIC file',
+    howStep2:'Process', howStep2Desc:'Clean metadata, crop, resize, watermark — all in-browser',
+    howStep3:'Download', howStep3Desc:'Save the result. Original file is never touched',
+    privacyTitle:'🔐 Privacy guarantee',
+    privacyP1:'Your photos are processed locally — never sent anywhere',
+    privacyP2:'No cookies, no analytics, no fingerprinting',
+    privacyP3:'Works fully offline after first load',
+    privacyP4:'Open source — inspect the code yourself',
+    privacyP5:'Original file on your disk is never modified',
+    privacyP6:'EXIF cleaning verified — re-parsed after every clean',
+    tool1Name:'EXIF Cleaner', tool1Desc:'Remove hidden metadata',
+    tool2Name:'Editor', tool2Desc:'Edit metadata fields',
+    tool3Name:'Crop', tool3Desc:'Cut to any ratio',
+    tool4Name:'Rotate', tool4Desc:'Rotate & flip',
+    tool5Name:'Resize', tool5Desc:'Change dimensions',
+    tool6Name:'Watermark', tool6Desc:'Add text overlay',
+    tool7Name:'Compress', tool7Desc:'Reduce file size', pwaInstallLbl:'Install app',
     newPhotoLbl:'New photo',
     cleanResultTitle:'Cleaned — verification report',
     cleanResultSub:'Original file on your disk is unchanged',
@@ -774,6 +940,24 @@ const STRINGS = {
     sHas:'есть EXIF',sClean:'✓ очищено',sNone:'нет EXIF',
     toastCleaned:'✓ EXIF очищен',toastSaved:'✓ Сохранено',toastCropped:'✓ Обрезано',
     renameNone:'нет даты', dropLoadingLbl:'Загрузка…',
+    howTitle:'Как это работает', toolsTitle:'7 инструментов',
+    howStep1:'Открыть фото', howStep1Desc:'Перетащите или выберите JPEG, PNG, WEBP или HEIC',
+    howStep2:'Обработать', howStep2Desc:'Очистить метаданные, обрезать, изменить размер — всё в браузере',
+    howStep3:'Скачать', howStep3Desc:'Сохраните результат. Оригинал на диске не изменяется',
+    privacyTitle:'🔐 Гарантии приватности',
+    privacyP1:'Фото обрабатываются локально — никуда не отправляются',
+    privacyP2:'Без cookies, без аналитики, без отслеживания',
+    privacyP3:'Работает полностью офлайн после первой загрузки',
+    privacyP4:'Открытый код — можно проверить самому',
+    privacyP5:'Оригинал на вашем диске никогда не изменяется',
+    privacyP6:'Очистка EXIF верифицируется — файл перепарсится после каждой очистки',
+    tool1Name:'EXIF Cleaner', tool1Desc:'Удалить скрытые данные',
+    tool2Name:'Редактор', tool2Desc:'Редактировать метаданные',
+    tool3Name:'Кадрирование', tool3Desc:'Обрезать по пропорциям',
+    tool4Name:'Поворот', tool4Desc:'Повернуть и отразить',
+    tool5Name:'Размер', tool5Desc:'Изменить размер',
+    tool6Name:'Ватермарк', tool6Desc:'Добавить текст',
+    tool7Name:'Сжатие', tool7Desc:'Уменьшить файл', pwaInstallLbl:'Установить приложение',
     newPhotoLbl:'Новое фото',
     cleanResultTitle:'Очищено — отчёт верификации',
     cleanResultSub:'Оригинал на диске не изменён',
@@ -807,7 +991,13 @@ const s = () => STRINGS[currentLang];
 
 function applyStrings() {
   const L = s();
-  const ids = ['heroSub','dropTitle','dropSub','dropLoadingLbl','changeFileLbl','newPhotoLbl','exifCardTitle','cleanCardTitle',
+  const ids = ['heroSub','dropTitle','dropSub','dropLoadingLbl','changeFileLbl','newPhotoLbl',
+    'howTitle','toolsTitle',
+    'howStep1','howStep1Desc','howStep2','howStep2Desc','howStep3','howStep3Desc',
+    'privacyTitle','privacyP1','privacyP2','privacyP3','privacyP4','privacyP5','privacyP6',
+    'tool1Name','tool1Desc','tool2Name','tool2Desc','tool3Name','tool3Desc',
+    'tool4Name','tool4Desc','tool5Name','tool5Desc','tool6Name','tool6Desc','tool7Name','tool7Desc',
+    'exifCardTitle','cleanCardTitle',
     'chipAll','chipLoc','chipDevice','chipTime','chipSoftware','chipAuthor','cleanBtnLbl','exifDlLbl',
     'cleanResultTitle','cleanResultSub',
     'tabEditorLbl','editorCardTitle','lbArtist','lbCopyright','lbDesc','lbSoftware','lbLat','lbLng','saveBtnLbl','editorDlLbl',
@@ -816,7 +1006,7 @@ function applyStrings() {
     'resizeCardTitle','resizePresetsLbl','resizeWLbl','resizeHLbl','resizeLockLbl','resizeApplyLbl','resizeDlLbl',
     'wmCardTitle','lbWmText','lbWmColor','lbWmOpacity','lbWmTile','wmTileLbl','wmDragHint','wmDlLbl',
     'compressCardTitle','lbBefore','lbAfter','lbQuality','compressDlLbl','lbCompressOriginal','lbCompressResult',
-    'footerSupport','langLabel'];
+    'footerSupport','langLabel','pwaInstallLbl'];
   ids.forEach(id => { const el = document.getElementById(id); if (el && L[id]) el.textContent = L[id]; });
   // heroTitle may contain <br> in HTML default — use innerHTML for it
   const heroEl = document.getElementById('heroTitle');
@@ -1982,6 +2172,52 @@ async function stripViaCanvas(blob, type) {
 
 let _toastT;
 function showToast(msg) { const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(_toastT); _toastT=setTimeout(()=>el.classList.remove('show'),2400); }
+
+// ══════════════════════════════════════════════════════
+// PWA — SERVICE WORKER + INSTALL PROMPT
+// ══════════════════════════════════════════════════════
+(function() {
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+const CACHE = 'privacykit-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.add(self.location.href)));
+  self.skipWaiting();
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(keys =>
+    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+  ));
+  self.clients.claim();
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).catch(() => caches.match(e.request)))
+  );
+});`;
+    const blob = new Blob([swCode], { type: 'application/javascript' });
+    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+  }
+
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.style.display = 'inline-flex';
+  });
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    const btn = document.getElementById('pwa-install-btn');
+    if (btn) btn.style.display = 'none';
+    showToast('✓ PrivacyKit installed!');
+  });
+  window._installPWA = () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+  };
+})();
 </script>
 </body>
 </html>
